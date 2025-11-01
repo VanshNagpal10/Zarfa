@@ -78,7 +78,7 @@ function AptosLandingPage() {
         <div className="flex flex-wrap justify-center gap-12 mt-12 z-10 w-full max-w-[1024px]">
           <div className="flex flex-col items-center">
             <span className="font-['Montserrat'] text-[36px] font-[900] text-brand-800">
-              4s
+              1s
             </span>
             <span className="font-['Montserrat'] text-[14px] font-[600] text-brand-600">
               Transaction Finality

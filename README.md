@@ -6,7 +6,7 @@
 
 **Simply means "Helping users to claim VAT Refund Anytime Anywhere without hassling"**
 
-> **Note:** This project was originally built on Aptos blockchain and is currently transitioning to Monad (EVM-compatible). Legacy Aptos code remains in the codebase but is not actively used. MetaMask is used for wallet integration instead of Petra Wallet.
+> **Note:** This project is built on Monad blockchain (EVM-compatible). MetaMask is used for wallet integration.
 
 ## Prototype
 
@@ -40,7 +40,7 @@
 
 • Transaction hash on Monad Explorer
   
-   ![Monad Explorer](9aptosexplorer.png)
+   ![Monad Explorer](9monadexplorer.png)
 
 • VAT refund history
   
@@ -68,7 +68,7 @@
 
 **Simply means "Helping users to claim VAT Refund Anytime Anywhere without hassling"**
 
-> **Note:** This project was originally built on Aptos blockchain and is currently transitioning to Monad (EVM-compatible). Legacy Aptos code remains in the codebase but is not actively used. MetaMask is used for wallet integration instead of Petra Wallet.
+> **Note:** This project is built on Monad blockchain (EVM-compatible). MetaMask is used for wallet integration.
 
 ---
 

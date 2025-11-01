@@ -20,6 +20,7 @@ import {
 import { usePayments } from "../hooks/usePayments";
 import { VATRefundFeeInfo } from "./PlatformFeeInfo";
 import { processVATReceipt, VATReceiptData } from "../services/aiService";
+import VATRefundHistory from "./VATRefundHistory";
 
 interface VATRefundPageProps {
   onBack?: () => void;
@@ -988,305 +989,137 @@ export const VATRefundPage: React.FC<VATRefundPageProps> = () => {
             </h2>
 
             <div className="bg-gray-50 border border-gray-200 rounded-lg p-6 mb-6">
-              {entryMode === "upload" ? (
-                <>
-                  <div className="flex items-start mb-4">
-                    <div className="bg-blue-100 p-3 rounded-lg mr-4">
-                      <FileText className="w-6 h-6 text-blue-600" />
-                    </div>
-                    <div className="flex-1">
-                      <h3 className="font-semibold text-gray-900">
-                        {selectedFile?.name}
-                      </h3>
-                      <p className="text-sm text-gray-600">Processed by AI just now</p>
-                      {aiExtractedData && (
-                        <div className="mt-2">
-                          <div className="flex items-center gap-2">
-                            <span className="text-xs font-medium text-gray-700">AI Confidence:</span>
-                            <div className="flex-1 bg-gray-200 rounded-full h-2 max-w-32">
-                              <div
-                                className={`h-2 rounded-full ${
-                                  aiExtractedData.confidence > 0.7
-                                    ? "bg-green-500"
-                                    : aiExtractedData.confidence > 0.5
-                                    ? "bg-yellow-500"
-                                    : "bg-orange-500"
-                                }`}
-                                style={{ width: `${aiExtractedData.confidence * 100}%` }}
-                              ></div>
-                            </div>
-                            <span className="text-xs font-semibold text-gray-900">
-                              {(aiExtractedData.confidence * 100).toFixed(0)}%
-                            </span>
-                          </div>
+              <div className="flex items-start mb-4">
+                <div className="bg-blue-100 p-3 rounded-lg mr-4">
+                  <FileText className="w-6 h-6 text-blue-600" />
+                </div>
+                <div className="flex-1">
+                  <h3 className="font-semibold text-gray-900">
+                    {selectedFile?.name || "Manual Entry"}
+                  </h3>
+                  <p className="text-sm text-gray-600">
+                    {entryMode === "upload" ? "Processed by AI just now" : "Manually entered information"}
+                  </p>
+                  {aiExtractedData && entryMode === "upload" && (
+                    <div className="mt-2">
+                      <div className="flex items-center gap-2">
+                        <span className="text-xs font-medium text-gray-700">AI Confidence:</span>
+                        <div className="flex-1 bg-gray-200 rounded-full h-2 max-w-32">
+                          <div
+                            className={`h-2 rounded-full ${
+                              aiExtractedData.confidence > 0.7
+                                ? "bg-green-500"
+                                : aiExtractedData.confidence > 0.5
+                                ? "bg-yellow-500"
+                                : "bg-orange-500"
+                            }`}
+                            style={{ width: `${aiExtractedData.confidence * 100}%` }}
+                          ></div>
                         </div>
-                      )}
-                    </div>
-                  </div>
-
-                  {/* AI-Extracted Receipt Information */}
-                  {aiExtractedData && (
-                    <div className="border-b border-gray-200 pb-4 mb-4">
-                      <div className="flex items-center gap-2 mb-3">
-                        <h4 className="font-medium text-gray-900">
-                          🤖 AI-Extracted Receipt Information
-                        </h4>
-                      </div>
-                      <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
-                        <div>
-                          <p className="text-sm text-gray-600">Merchant Name</p>
-                          <p className="text-sm font-medium text-gray-900">
-                            {aiExtractedData.merchantName}
-                          </p>
-                        </div>
-                        <div>
-                          <p className="text-sm text-gray-600">Receipt Number</p>
-                          <p className="text-sm font-medium text-gray-900">
-                            {aiExtractedData.receiptNumber}
-                          </p>
-                        </div>
-                        {aiExtractedData.merchantAddress && (
-                          <div className="md:col-span-2">
-                            <p className="text-sm text-gray-600">Merchant Address</p>
-                            <p className="text-sm font-medium text-gray-900">
-                              {aiExtractedData.merchantAddress}
-                            </p>
-                          </div>
-                        )}
-                        <div>
-                          <p className="text-sm text-gray-600">Purchase Date</p>
-                          <p className="text-sm font-medium text-gray-900">
-                            {aiExtractedData.purchaseDate}
-                          </p>
-                        </div>
-                        {aiExtractedData.vatRegistrationNumber && (
-                          <div>
-                            <p className="text-sm text-gray-600">VAT Registration No.</p>
-                            <p className="text-sm font-medium text-gray-900">
-                              {aiExtractedData.vatRegistrationNumber}
-                            </p>
-                          </div>
-                        )}
-                        <div>
-                          <p className="text-sm text-gray-600">Total Bill Amount</p>
-                          <p className="text-sm font-medium text-gray-900">
-                            ${aiExtractedData.totalAmount.toFixed(2)}
-                          </p>
-                        </div>
-                        <div>
-                          <p className="text-sm text-gray-600">VAT Amount</p>
-                          <p className="text-sm font-medium text-green-600">
-                            ${aiExtractedData.vatAmount.toFixed(2)}
-                          </p>
-                        </div>
+                        <span className="text-xs font-semibold text-gray-900">
+                          {(aiExtractedData.confidence * 100).toFixed(0)}%
+                        </span>
                       </div>
                     </div>
                   )}
-                </>
-              ) : (
-                <div className="flex items-start mb-4">
-                  <div className="bg-blue-100 p-3 rounded-lg mr-4">
-                    <FormInput className="w-6 h-6 text-blue-600" />
+                </div>
+              </div>
+
+              {/* Receipt Information */}
+              <div className="border-b border-gray-200 pb-4 mb-4">
+                <div className="flex items-center gap-2 mb-3">
+                  <h4 className="font-medium text-gray-900">
+                    {entryMode === "upload" && aiExtractedData ? "🤖 AI-Extracted " : ""}Receipt Information
+                  </h4>
+                </div>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                  <div>
+                    <p className="text-sm text-gray-600">Receipt Number</p>
+                    <p className="text-sm font-medium text-gray-900">
+                      {formData.receiptNo}
+                    </p>
                   </div>
                   <div>
-                    <h3 className="font-semibold text-gray-900">
-                      Manual Entry
-                    </h3>
-                    <p className="text-sm text-gray-600">Submitted just now</p>
+                    <p className="text-sm text-gray-600">Bill Amount</p>
+                    <p className="text-sm font-medium text-gray-900">
+                      ${formData.billAmount}
+                    </p>
+                  </div>
+                  <div>
+                    <p className="text-sm text-gray-600">VAT Amount</p>
+                    <p className="text-sm font-medium text-green-600">
+                      ${formData.vatAmount}
+                    </p>
+                  </div>
+                  <div>
+                    <p className="text-sm text-gray-600">Refund Amount</p>
+                    <p className="text-sm font-medium text-green-600 font-bold">
+                      {refundAmount.toFixed(2)} {selectedToken}
+                    </p>
                   </div>
                 </div>
+              </div>
+            </div>
+          </div>
+        );
+      case "sign":
+        return (
+          <div className="bg-white rounded-lg border border-gray-200 shadow-sm p-6">
+            <div className="text-center">
+              <div className="mx-auto flex items-center justify-center h-12 w-12 rounded-full bg-blue-100 mb-4">
+                <Wallet className="h-6 w-6 text-blue-600" />
+              </div>
+              <h3 className="text-lg font-medium text-gray-900 mb-2">
+                Approve Transaction
+              </h3>
+              <p className="text-sm text-gray-500 mb-6">
+                Please approve the transaction in your wallet to complete the VAT refund
+              </p>
+              {transactionStatus === "waiting" && (
+                <div className="animate-pulse">
+                  <div className="h-2 bg-blue-200 rounded"></div>
+                </div>
               )}
-
-              <div className="space-y-4">
-                {entryMode === "manual" && (
-                  <>
-                    <div className="border-b border-gray-200 pb-4 mb-4">
-                      <h4 className="font-medium text-gray-900 mb-3">
-                        Receipt Information
-                      </h4>
-                      <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
-                        <div>
-                          <p className="text-sm text-gray-600">
-                            VAT Registration No.
-                          </p>
-                          <p className="text-sm font-medium text-gray-900">
-                            {formData.vatRegNo}
-                          </p>
-                        </div>
-                        <div>
-                          <p className="text-sm text-gray-600">
-                            Receipt/Invoice No.
-                          </p>
-                          <p className="text-sm font-medium text-gray-900">
-                            {formData.receiptNo}
-                          </p>
-                        </div>
-                        {formData.billAmount && (
-                          <div>
-                            <p className="text-sm text-gray-600">
-                              Total Bill Amount
-                            </p>
-                            <p className="text-sm font-medium text-gray-900">
-                              ${parseFloat(formData.billAmount).toFixed(2)}
-                            </p>
-                          </div>
-                        )}
-                        {formData.purchaseDate && (
-                          <div>
-                            <p className="text-sm text-gray-600">
-                              Purchase Date
-                            </p>
-                            <p className="text-sm font-medium text-gray-900">
-                              {formData.purchaseDate}
-                            </p>
-                          </div>
-                        )}
-                        <div>
-                          <p className="text-sm text-gray-600">
-                            Receiver Wallet Address
-                          </p>
-                          <p className="text-sm font-medium text-gray-900 break-all">
-                            {formData.receiverWalletAddress}
-                          </p>
-                        </div>
-                        <div>
-                          <p className="text-sm text-gray-600">Token</p>
-                          <p className="text-sm font-medium text-gray-900">
-                            {selectedToken === "MON"
-                              ? "Monad (MON)"
-                              : "USD Coin (USDC)"}
-                          </p>
-                        </div>
-                      </div>
-                    </div>
-
-                    <div className="border-b border-gray-200 pb-4 mb-4">
-                      <h4 className="font-medium text-gray-900 mb-3">
-                        Personal Information
-                      </h4>
-                      <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
-                        <div>
-                          <p className="text-sm text-gray-600">
-                            Passport Number
-                          </p>
-                          <p className="text-sm font-medium text-gray-900">
-                            {formData.passportNo}
-                          </p>
-                        </div>
-                        {formData.flightNo && (
-                          <div>
-                            <p className="text-sm text-gray-600">
-                              Flight Number
-                            </p>
-                            <p className="text-sm font-medium text-gray-900">
-                              {formData.flightNo}
-                            </p>
-                          </div>
-                        )}
-                        {formData.nationality && (
-                          <div>
-                            <p className="text-sm text-gray-600">
-                              Country of Nationality
-                            </p>
-                            <p className="text-sm font-medium text-gray-900">
-                              {formData.nationality}
-                            </p>
-                          </div>
-                        )}
-                        {formData.dob && (
-                          <div>
-                            <p className="text-sm text-gray-600">
-                              Date of Birth
-                            </p>
-                            <p className="text-sm font-medium text-gray-900">
-                              {formData.dob}
-                            </p>
-                          </div>
-                        )}
-                      </div>
-                    </div>
-
-                    {(formData.merchantName || formData.merchantAddress) && (
-                      <div className="border-b border-gray-200 pb-4 mb-4">
-                        <h4 className="font-medium text-gray-900 mb-3">
-                          Merchant Information
-                        </h4>
-                        <div className="grid grid-cols-1 gap-3">
-                          {formData.merchantName && (
-                            <div>
-                              <p className="text-sm text-gray-600">
-                                Merchant Name
-                              </p>
-                              <p className="text-sm font-medium text-gray-900">
-                                {formData.merchantName}
-                              </p>
-                            </div>
-                          )}
-                          {formData.merchantAddress && (
-                            <div>
-                              <p className="text-sm text-gray-600">
-                                Merchant Address
-                              </p>
-                              <p className="text-sm font-medium text-gray-900">
-                                {formData.merchantAddress}
-                              </p>
-                            </div>
-                          )}
-                        </div>
-                      </div>
-                    )}
-                  </>
-                )}
-
-                <div className="flex justify-between border-b border-gray-200 pb-2">
-                  <span className="text-gray-600">Document Type:</span>
-                  <span className="text-gray-900 font-medium">VAT Receipt</span>
-                </div>
-                <div className="flex justify-between border-b border-gray-200 pb-2">
-                  <span className="text-gray-600">Receiver Address:</span>
-                  <span className="text-gray-900 font-medium break-all">
-                    {formData.receiverWalletAddress}
-                  </span>
-                </div>
-                <div className="flex justify-between border-b border-gray-200 pb-2">
-                  <span className="text-gray-600">Token Type:</span>
-                  <span className="text-gray-900 font-medium">
-                    {selectedToken}
-                  </span>
-                </div>
-                <div className="flex justify-between">
-                  <span className="text-gray-900 font-semibold">
-                    Total Refund:
-                  </span>
-                  <span className="text-green-600 font-bold">
-                    {refundAmount.toFixed(2)} {selectedToken}
-                  </span>
-                </div>
-              </div>
             </div>
-
-            {/* VAT Refund Fee Breakdown */}
-            <div className="mb-6">
-              <VATRefundFeeInfo vatAmount={refundAmount} />
-            </div>
-
-            <div className="flex justify-between">
-              <div className="flex gap-3">
-                <button
-                  onClick={handleReset}
-                  className="border border-gray-300 text-gray-700 font-medium py-2 px-6 rounded-lg transition-all duration-200 hover:bg-gray-50"
-                >
-                  New Upload
-                </button>
-                <button
-                  onClick={() => setStep("upload")}
-                  className="border border-blue-300 text-blue-700 font-medium py-2 px-6 rounded-lg transition-all duration-200 hover:bg-blue-50"
-                >
-                  Edit Details
-                </button>
+          </div>
+        );
+      case "confirmation":
+        return (
+          <div className="bg-white rounded-lg border border-gray-200 shadow-sm p-6">
+            <div className="text-center">
+              <div className="mx-auto flex items-center justify-center h-12 w-12 rounded-full bg-green-100 mb-4">
+                <CheckCircle className="h-6 w-6 text-green-600" />
               </div>
+              <h3 className="text-lg font-medium text-gray-900 mb-2">
+                VAT Refund Submitted Successfully!
+              </h3>
+              <p className="text-sm text-gray-500 mb-6">
+                Your VAT refund has been submitted and will be processed shortly
+              </p>
               <button
-                onClick={handleApprove}
+                onClick={handleReset}
+                className="bg-blue-600 text-white font-medium py-2 px-6 rounded-lg transition-all duration-200 hover:bg-blue-700"
+              >
+                Submit Another Refund
+              </button>
+            </div>
+          </div>
+        );
+      case "error":
+        return (
+          <div className="bg-white rounded-lg border border-gray-200 shadow-sm p-6">
+            <div className="text-center">
+              <div className="mx-auto flex items-center justify-center h-12 w-12 rounded-full bg-red-100 mb-4">
+                <AlertCircle className="h-6 w-6 text-red-600" />
+              </div>
+              <h3 className="text-lg font-medium text-gray-900 mb-2">
+                Transaction Failed
+              </h3>
+              <p className="text-sm text-gray-500 mb-6">
+                {errorMessage || "Something went wrong. Please try again."}
+              </p>
+              <button
+                onClick={handleReset}
                 disabled={isLoading}
                 className={`bg-gray-900 hover:bg-gray-800 text-white font-medium py-2 px-6 rounded-lg transition-all duration-200 ${
                   isLoading ? "opacity-50 cursor-not-allowed" : ""
@@ -1593,119 +1426,7 @@ export const VATRefundPage: React.FC<VATRefundPageProps> = () => {
   };
 
   const renderHistoryTab = () => {
-    return (
-      <div className="bg-white rounded-lg border border-gray-200 shadow-sm p-6">
-        <div className="flex justify-between items-center mb-6">
-          <h2 className="text-xl font-bold text-gray-900">
-            VAT Refund History
-          </h2>
-          <div className="relative">
-            <input
-              type="text"
-              placeholder="Search refunds..."
-              className="pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-            />
-            <Search className="w-5 h-5 text-gray-400 absolute left-3 top-1/2 transform -translate-y-1/2" />
-          </div>
-        </div>
-
-        {isHistoryLoading ? (
-          <div className="flex justify-center items-center py-12">
-            <div className="w-8 h-8 border-4 border-gray-300 border-t-blue-500 rounded-full animate-spin"></div>
-            <span className="ml-3 text-gray-600">
-              Loading refund history...
-            </span>
-          </div>
-        ) : refundHistory.length === 0 ? (
-          <div className="text-center py-12">
-            <div className="text-gray-500 mb-2">
-              No VAT refund history found
-            </div>
-            <p className="text-gray-400 text-sm">
-              Submit a VAT refund to see it in your history
-            </p>
-          </div>
-        ) : (
-          <div className="overflow-x-auto">
-            <table className="w-full">
-              <thead>
-                <tr className="border-b border-gray-200">
-                  <th className="text-left py-3 px-4 font-semibold text-gray-600">
-                    ID
-                  </th>
-                  <th className="text-left py-3 px-4 font-semibold text-gray-600">
-                    Date
-                  </th>
-                  <th className="text-right py-3 px-4 font-semibold text-gray-600">
-                    Amount
-                  </th>
-                  <th className="text-center py-3 px-4 font-semibold text-gray-600">
-                    Token
-                  </th>
-                  <th className="text-center py-3 px-4 font-semibold text-gray-600">
-                    Status
-                  </th>
-                  <th className="text-center py-3 px-4 font-semibold text-gray-600">
-                    Transaction
-                  </th>
-                </tr>
-              </thead>
-              <tbody>
-                {refundHistory.map((refund) => (
-                  <tr
-                    key={refund.id}
-                    className="border-b border-gray-100 hover:bg-gray-50"
-                  >
-                    <td className="py-3 px-4 text-gray-800">
-                      {refund.id.slice(0, 8)}...
-                    </td>
-                    <td className="py-3 px-4 text-gray-800">
-                      {new Date(refund.date).toLocaleDateString()}
-                    </td>
-                    <td className="py-3 px-4 text-right text-gray-800">
-                      {refund.amount.toFixed(2)}
-                    </td>
-                    <td className="py-3 px-4 text-center text-gray-800">
-                      {refund.token || "MON"}
-                    </td>
-                    <td className="py-3 px-4">
-                      <div className="flex justify-center">
-                        {refund.status === "completed" ? (
-                          <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-green-100 text-green-800">
-                            <CheckCircle className="w-3 h-3 mr-1" /> Completed
-                          </span>
-                        ) : (
-                          <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-yellow-100 text-yellow-800">
-                            <Clock className="w-3 h-3 mr-1" /> Pending
-                          </span>
-                        )}
-                      </div>
-                    </td>
-                    <td className="py-3 px-4 text-center">
-                      {refund.transaction_hash ? (
-                        <a
-                          href={`https://testnet.monadexplorer.com/tx/${refund.transaction_hash}`}
-                          target="_blank"
-                          rel="noopener noreferrer"
-                          className="text-blue-600 hover:text-blue-800 font-mono flex items-center justify-center space-x-1 hover:underline"
-                        >
-                          <span className="truncate max-w-28">
-                            {refund.transaction_hash.slice(0, 8)}...
-                          </span>
-                          <ExternalLink className="w-3 h-3" />
-                        </a>
-                      ) : (
-                        <span className="text-gray-400">-</span>
-                      )}
-                    </td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
-        )}
-      </div>
-    );
+    return <VATRefundHistory />;
   };
 
   return (
