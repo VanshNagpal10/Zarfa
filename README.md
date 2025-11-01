@@ -1,6 +1,5 @@
 # Zarfa
 
-<img src="public/logo.png" alt="Zarfa Logo" width="160" />
 
 **On-chain VAT Refund Payment Protocol Infrastructure** protecting users against time loss, missed claims in fear of missing flights, and payment failures, powered by **Monad blockchain (EVM-compatible)**.
 
@@ -14,9 +13,6 @@
   
    ![Landing Page](<1 landing-page.png>)
 
-• Landing page explaining features
-  
-   ![Landing page 2](1landing-page2.png)
 
 • After clicking wallet, MetaMask asks for confirmation to connect
   
@@ -38,17 +34,10 @@
   
    ![Confirm transaction](8vatrefundaprove.png)
 
-• Transaction hash on Monad Explorer
-  
-   ![Monad Explorer](9monadexplorer.png)
-
 • VAT refund history
   
    ![VAT refund history](10vatrefundhistory.png)
 
-• Employee management
-  
-   ![Employee management](10employee.png)
 
 • Add employee either manually or via bulk CSV
   
