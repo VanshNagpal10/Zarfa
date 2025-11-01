@@ -99,7 +99,7 @@ This document summarizes the comprehensive frontend migration from Aptos blockch
     - Updated architecture diagrams, tech stack, getting started guide
 
 14. **`package.json`** (previously updated)
-    - Project name: "Orbix-aptos" → "Orbix-monad"
+    - Project name: "Zarfa-aptos" → "Zarfa-monad"
 
 15. **`.github/copilot-instructions.md`** (previously created)
     - Complete documentation for AI agents about the Aptos→Monad transition
@@ -123,7 +123,7 @@ This document summarizes the comprehensive frontend migration from Aptos blockch
 ✅ **Real-Time Prices**: TokenBalance now uses live CoinGecko API data
 ✅ **Real Balances**: PaymentGateway fetches actual on-chain MON/USDC balances
 ✅ **Balance Validation**: Checks real wallet balance before transactions
-✅ **Package Name Fixed**: Changed from "Orbix-monad" to "orbix-monad"
+✅ **Package Name Fixed**: Changed from "Zarfa-monad" to "Zarfa-monad"
 ✅ **Dynamic Processing Time**: VAT refund average time calculated from real data
 ✅ **Clean Codebase**: All mock functions and misleading logs removed
 
@@ -252,3 +252,4 @@ if (numAmount > currentBalance) {
 **Migration Completed**: All frontend references from Aptos to Monad have been updated ✅  
 **Date**: Generated during migration session  
 **Status**: Production-ready (with noted follow-up items)
+

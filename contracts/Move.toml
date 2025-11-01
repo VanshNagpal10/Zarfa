@@ -1,10 +1,10 @@
 [package]
-name = "Orbix_payments"
+name = "Zarfa_payments"
 version = "1.0.0"
-authors = ["Orbix Team"]
+authors = ["Zarfa Team"]
 
 [addresses]
-Orbix = "_"
+Zarfa = "_"
 
 [dev-addresses]
 

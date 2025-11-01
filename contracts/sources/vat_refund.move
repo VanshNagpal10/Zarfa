@@ -1,4 +1,4 @@
-module Orbix::vat_refund {
+module Zarfa::vat_refund {
     use std::signer;
     use std::string::{Self, String};
     use std::vector;
@@ -105,7 +105,7 @@ module Orbix::vat_refund {
         assert!(vat_amount <= bill_amount, E_INVALID_AMOUNT);
 
         // Get processor
-        let processor = borrow_global_mut<VATRefundProcessor>(@Orbix);
+        let processor = borrow_global_mut<VATRefundProcessor>(@Zarfa);
         processor.refund_counter = processor.refund_counter + 1;
         let refund_id = processor.refund_counter;
 
@@ -125,7 +125,7 @@ module Orbix::vat_refund {
             document_hash,
             timestamp: timestamp::now_microseconds(),
             status: string::utf8(b"pending"),
-            processor: @Orbix,
+            processor: @Zarfa,
             transaction_hash: string::utf8(b""),
         };
 
@@ -143,7 +143,7 @@ module Orbix::vat_refund {
         approve: bool,
     ) acquires VATRefundProcessor {
         let processor_addr = signer::address_of(processor_account);
-        let processor = borrow_global_mut<VATRefundProcessor>(@Orbix);
+        let processor = borrow_global_mut<VATRefundProcessor>(@Zarfa);
         
         // Find the refund
         let refund_index = 0;
@@ -187,7 +187,7 @@ module Orbix::vat_refund {
 
     /// Get VAT refund history for an applicant
     public fun get_refund_history(applicant: address): vector<VATRefund> acquires VATRefundProcessor {
-        let processor = borrow_global<VATRefundProcessor>(@Orbix);
+        let processor = borrow_global<VATRefundProcessor>(@Zarfa);
         let filtered_refunds = vector::empty<VATRefund>();
         
         let i = 0;
@@ -206,7 +206,7 @@ module Orbix::vat_refund {
 
     /// Get all pending refunds (for processors)
     public fun get_pending_refunds(): vector<VATRefund> acquires VATRefundProcessor {
-        let processor = borrow_global<VATRefundProcessor>(@Orbix);
+        let processor = borrow_global<VATRefundProcessor>(@Zarfa);
         let pending_refunds = vector::empty<VATRefund>();
         
         let i = 0;
@@ -231,13 +231,13 @@ module Orbix::vat_refund {
 
     /// Get total refunds processed
     public fun get_total_refunded(): u64 acquires VATRefundProcessor {
-        let processor = borrow_global<VATRefundProcessor>(@Orbix);
+        let processor = borrow_global<VATRefundProcessor>(@Zarfa);
         processor.total_refunded
     }
 
     /// Get refund count
     public fun get_refund_count(): u64 acquires VATRefundProcessor {
-        let processor = borrow_global<VATRefundProcessor>(@Orbix);
+        let processor = borrow_global<VATRefundProcessor>(@Zarfa);
         processor.refund_counter
     }
 

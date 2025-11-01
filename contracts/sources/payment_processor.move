@@ -1,4 +1,4 @@
-module Orbix::payment_processor {
+module Zarfa::payment_processor {
     use std::signer;
     use std::string::{Self, String};
     use std::vector;
@@ -108,7 +108,7 @@ module Orbix::payment_processor {
         assert!(amount > 0, E_INVALID_AMOUNT);
 
         // Get payment processor
-        let processor = borrow_global_mut<PaymentProcessor>(@Orbix);
+        let processor = borrow_global_mut<PaymentProcessor>(@Zarfa);
         
         // Create payment record
         processor.payment_counter = processor.payment_counter + 1;
@@ -165,7 +165,7 @@ module Orbix::payment_processor {
         };
 
         // Get payment processor
-        let processor = borrow_global_mut<PaymentProcessor>(@Orbix);
+        let processor = borrow_global_mut<PaymentProcessor>(@Zarfa);
         processor.bulk_counter = processor.bulk_counter + 1;
         let bulk_id = processor.bulk_counter;
 
@@ -206,7 +206,7 @@ module Orbix::payment_processor {
 
     /// Get payment history for an account
     public fun get_payment_history(account_addr: address): vector<PaymentRecord> acquires PaymentProcessor {
-        let processor = borrow_global<PaymentProcessor>(@Orbix);
+        let processor = borrow_global<PaymentProcessor>(@Zarfa);
         let filtered_payments = vector::empty<PaymentRecord>();
         
         let i = 0;
@@ -225,7 +225,7 @@ module Orbix::payment_processor {
 
     /// Get bulk payment history for an account
     public fun get_bulk_payment_history(account_addr: address): vector<BulkPayment> acquires PaymentProcessor {
-        let processor = borrow_global<PaymentProcessor>(@Orbix);
+        let processor = borrow_global<PaymentProcessor>(@Zarfa);
         let filtered_payments = vector::empty<BulkPayment>();
         
         let i = 0;
@@ -244,13 +244,13 @@ module Orbix::payment_processor {
 
     /// Get total payment count
     public fun get_payment_count(): u64 acquires PaymentProcessor {
-        let processor = borrow_global<PaymentProcessor>(@Orbix);
+        let processor = borrow_global<PaymentProcessor>(@Zarfa);
         processor.payment_counter
     }
 
     /// Get total bulk payment count
     public fun get_bulk_payment_count(): u64 acquires PaymentProcessor {
-        let processor = borrow_global<PaymentProcessor>(@Orbix);
+        let processor = borrow_global<PaymentProcessor>(@Zarfa);
         processor.bulk_counter
     }
 

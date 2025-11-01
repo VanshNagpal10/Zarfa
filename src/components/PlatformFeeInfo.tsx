@@ -101,7 +101,7 @@ export const VATRefundFeeInfo: React.FC<VATRefundFeeInfoProps> = ({
           </div>
           <div className="mt-3 pt-3 border-t border-purple-200">
             <p className="text-xs text-gray-600">
-              ✨ <strong>No airport queues, no paperwork!</strong> Get your VAT refund instantly through Orbix.
+              ✨ <strong>No airport queues, no paperwork!</strong> Get your VAT refund instantly through Zarfa.
             </p>
           </div>
         </div>
@@ -111,3 +111,4 @@ export const VATRefundFeeInfo: React.FC<VATRefundFeeInfoProps> = ({
 };
 
 export default PlatformFeeInfo;
+

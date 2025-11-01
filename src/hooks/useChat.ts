@@ -52,7 +52,7 @@ export const useChat = () => {
     setError(null);
 
     // First try to get chat sessions from localStorage
-    const localStorageKey = `Orbix_chat_sessions_${walletAddress}`;
+    const localStorageKey = `Zarfa_chat_sessions_${walletAddress}`;
     const storedSessions = localStorage.getItem(localStorageKey);
 
     if (storedSessions) {
@@ -146,7 +146,7 @@ export const useChat = () => {
         setChatSessions(updatedSessions);
 
         // Save to localStorage
-        const localStorageKey = `Orbix_chat_sessions_${walletAddress}`;
+        const localStorageKey = `Zarfa_chat_sessions_${walletAddress}`;
         localStorage.setItem(localStorageKey, JSON.stringify(updatedSessions));
 
         console.log("✅ Created chat session in localStorage:", newSession);
@@ -214,7 +214,7 @@ export const useChat = () => {
         setChatSessions(updatedSessions);
 
         // Save to localStorage
-        const localStorageKey = `Orbix_chat_sessions_${walletAddress}`;
+        const localStorageKey = `Zarfa_chat_sessions_${walletAddress}`;
         localStorage.setItem(localStorageKey, JSON.stringify(updatedSessions));
 
         console.log("Updated chat session in localStorage:", updatedSession);
@@ -264,7 +264,7 @@ export const useChat = () => {
         setChatSessions(updatedSessions);
 
         // Save to localStorage
-        const localStorageKey = `Orbix_chat_sessions_${walletAddress}`;
+        const localStorageKey = `Zarfa_chat_sessions_${walletAddress}`;
         localStorage.setItem(localStorageKey, JSON.stringify(updatedSessions));
 
         console.log("Deleted chat session from localStorage, ID:", sessionId);
@@ -302,7 +302,7 @@ export const useChat = () => {
       if (!walletAddress) {
         console.warn("⚠️ No wallet address, trying offline mode");
         // Try to get messages from localStorage even without wallet for offline mode
-        const localStorageKey = `Orbix_chat_messages_offline_${sessionId}`;
+        const localStorageKey = `Zarfa_chat_messages_offline_${sessionId}`;
         const storedMessages = localStorage.getItem(localStorageKey);
 
         if (storedMessages) {
@@ -320,7 +320,7 @@ export const useChat = () => {
       setError(null);
 
       // First try to get chat messages from localStorage (faster)
-      const localStorageKey = `Orbix_chat_messages_${walletAddress}_${sessionId}`;
+      const localStorageKey = `Zarfa_chat_messages_${walletAddress}_${sessionId}`;
       const storedMessages = localStorage.getItem(localStorageKey);
 
       if (storedMessages) {
@@ -396,7 +396,7 @@ export const useChat = () => {
       if (!walletAddress) {
         console.warn("⚠️ No wallet address, saving in offline mode");
         // Save in offline mode
-        const localStorageKey = `Orbix_chat_messages_offline_${sessionId}`;
+        const localStorageKey = `Zarfa_chat_messages_offline_${sessionId}`;
         const storedMessages = localStorage.getItem(localStorageKey);
         let existingMessages: ChatMessage[] = [];
 
@@ -420,7 +420,7 @@ export const useChat = () => {
       setError(null);
       try {
         // Get existing messages for this session
-        const localStorageKey = `Orbix_chat_messages_${walletAddress}_${sessionId}`;
+        const localStorageKey = `Zarfa_chat_messages_${walletAddress}_${sessionId}`;
         const storedMessages = localStorage.getItem(localStorageKey);
         let existingMessages: ChatMessage[] = [];
 

@@ -34,7 +34,7 @@ export const usePayments = () => {
   // Load payments from localStorage when wallet address changes
   useEffect(() => {
     if (walletAddress) {
-      const localStorageKey = `Orbix_payments_${walletAddress}`;
+      const localStorageKey = `Zarfa_payments_${walletAddress}`;
       const storedPayments = localStorage.getItem(localStorageKey);
 
       if (storedPayments) {
@@ -84,7 +84,7 @@ export const usePayments = () => {
         setPayments(updatedPayments);
 
         // Save to localStorage
-        const localStorageKey = `Orbix_payments_${walletAddress}`;
+        const localStorageKey = `Zarfa_payments_${walletAddress}`;
         localStorage.setItem(localStorageKey, JSON.stringify(updatedPayments));
 
         console.log("Added payment to localStorage:", newPayment);
@@ -156,7 +156,7 @@ export const usePayments = () => {
         setPayments(updatedPayments);
 
         // Save to localStorage
-        const localStorageKey = `Orbix_payments_${walletAddress}`;
+        const localStorageKey = `Zarfa_payments_${walletAddress}`;
         localStorage.setItem(localStorageKey, JSON.stringify(updatedPayments));
 
         console.log("Updated payment in localStorage:", updatedPayment);

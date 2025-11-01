@@ -410,7 +410,7 @@ Expected Result:
 
 ## Summary
 
-The Orbix platform now features **AI-powered VAT receipt processing** that:
+The Zarfa platform now features **AI-powered VAT receipt processing** that:
 
 1. ✅ **Automatically extracts VAT information** from uploaded receipt images
 2. ✅ **Provides confidence scoring** to ensure data accuracy
@@ -421,3 +421,4 @@ The Orbix platform now features **AI-powered VAT receipt processing** that:
 7. ✅ **Validates extracted data** before refund approval
 
 Users can now simply upload a photo of their VAT receipt, and the AI will handle the rest - extracting all necessary information and calculating the refund automatically! 🎉
+

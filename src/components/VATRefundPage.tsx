@@ -1345,7 +1345,7 @@ export const VATRefundPage: React.FC<VATRefundPageProps> = () => {
                         <span className="text-sm font-medium text-blue-900 break-all">
                           {entryMode === "manual"
                             ? formData.receiverWalletAddress
-                            : "Orbix VAT Refund Service"}
+                            : "Zarfa VAT Refund Service"}
                         </span>
                       </div>
                       <div className="flex justify-between">

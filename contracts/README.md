@@ -1,10 +1,10 @@
-# Orbix Payment Contracts
+# Zarfa Payment Contracts
 
 ⚠️ **IMPORTANT**: This directory contains **legacy Aptos Move contracts** that are **not compatible** with the current Monad blockchain implementation.
 
 ## Current Status
 
-The Orbix frontend has migrated to **Monad (EVM-compatible)** blockchain. These Move contracts require a complete rewrite in **Solidity** to work with Monad.
+The Zarfa frontend has migrated to **Monad (EVM-compatible)** blockchain. These Move contracts require a complete rewrite in **Solidity** to work with Monad.
 
 ## Legacy Contracts (Aptos Move - Not Deployed)
 

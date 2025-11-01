@@ -1,6 +1,6 @@
-# Orbix
+# Zarfa
 
-<img src="public/logo.png" alt="Orbix Logo" width="160" />
+<img src="public/logo.png" alt="Zarfa Logo" width="160" />
 
 **On-chain VAT Refund Payment Protocol Infrastructure** protecting users against time loss, missed claims in fear of missing flights, and payment failures, powered by **Monad blockchain (EVM-compatible)**.
 
@@ -94,7 +94,7 @@ These delays cause inconvenience, financial losses, and system failures worldwid
 
 ---
 
-## 🚀 The Solution: ⚡ Orbix
+## 🚀 The Solution: ⚡ Zarfa
 
 **Helping Masses to:**
 - ✅ Claim VAT Refund fully on-chain **anytime, anywhere**
@@ -102,7 +102,7 @@ These delays cause inconvenience, financial losses, and system failures worldwid
 - ✅ **Non-Intrusive**: No additional parameters, code, or complex application processes
 - ✅ **Simple Configuration** with maximum impact
 
-**Orbix** is a comprehensive **VAT Refund & Payroll Payment Infrastructure** built on the Monad blockchain that eliminates traditional pain points through:
+**Zarfa** is a comprehensive **VAT Refund & Payroll Payment Infrastructure** built on the Monad blockchain that eliminates traditional pain points through:
 - **Monad blockchain** with EVM-compatible smart contracts for secure, instant transactions
 - **MetaMask integration** for seamless user experience  
 - **AI orchestration** (Google Gemini) for automated processing and validation
@@ -120,7 +120,7 @@ These delays cause inconvenience, financial losses, and system failures worldwid
 
 ## ✅ Solution
 
-**Orbix** provides a **wallet-native payment infrastructure** where:
+**Zarfa** provides a **wallet-native payment infrastructure** where:
 - Tourists **receive VAT refunds** instantly through MetaMask integration.
 - Employers **manage payroll globally** with AI-assisted calculations and bulk transfers.
 - Monad blockchain ensures **fast finality (~1s block time)** and **low transaction costs**.
@@ -131,7 +131,7 @@ These delays cause inconvenience, financial losses, and system failures worldwid
 ## ⚡ How It Works?
 
 ### 1. **Tourist VAT Refund Flow:**
-- Retailer issues digital invoice + tax-free tag → Orbix locks a claim box on Monad
+- Retailer issues digital invoice + tax-free tag → Zarfa locks a claim box on Monad
 - Tourist departs → claim status flips to **VALIDATED**
 - Protocol computes: `refund = VAT × rate – fee` (configurable: 85–87%)
 - Executes instant payout in **MON** through MetaMask
@@ -391,7 +391,7 @@ contracts/
 
 ### **Partnership Revenue**
 - **VAT Operator Integration**: Revenue-sharing with Dubai VAT Refund Authorities, Planet, FTA
-- **API Licensing**: Package deals for fintechs/DAOs wanting to use Orbix infrastructure
+- **API Licensing**: Package deals for fintechs/DAOs wanting to use Zarfa infrastructure
 
 ### **Treasury Float & FX Spread** *(Future)*
 - Earn yield on treasury idle balances
@@ -417,10 +417,10 @@ contracts/
 - Offer **API + compliance dashboards** for HR SaaS integrations  
 - Add more VAT geographies: **EU, UK, Singapore, Saudi Arabia**
 
-### **Phase 4: Orbix DAO & Network Effects**
+### **Phase 4: Zarfa DAO & Network Effects**
 - Transition governance to a **decentralized DAO**
 - Community votes on fee splits, refund % rates, and expansion markets
-- **Tokenize access**: Loyalty incentives for employers and tourists using Orbix infrastructure
+- **Tokenize access**: Loyalty incentives for employers and tourists using Zarfa infrastructure
 
 ---
 
@@ -434,7 +434,7 @@ contracts/
 - **Treasury Automation**: Auto-scheduling payroll runs based on company preferences
 
 ### **Enterprise APIs**
-- Enable **fintechs, DAOs, and global SMBs** to plug Orbix rails into their HR/payments stack
+- Enable **fintechs, DAOs, and global SMBs** to plug Zarfa rails into their HR/payments stack
 - White-label solutions for existing payment processors
 
 ### **Compliance Integrations**
@@ -443,12 +443,12 @@ contracts/
 - Real-time compliance monitoring and alerting
 
 ### **DAO Governance** 
-- **Refund % fees, payroll fee splits, and expansion markets** managed by Orbix DAO
+- **Refund % fees, payroll fee splits, and expansion markets** managed by Zarfa DAO
 - Community-driven product roadmap and feature prioritization
 
 ---
 
-## 🎯 Why Orbix Will Succeed
+## 🎯 Why Zarfa Will Succeed
 
 - ✅ **Real Problem**: $200B+ VAT goes unclaimed annually - massive market opportunity
 - ✅ **Proven Solution**: Started with founder's personal pain point in Dubai
@@ -457,13 +457,13 @@ contracts/
 - ✅ **User Experience**: Wallet-native flows with MetaMask eliminate friction completely
 - ✅ **localStorage-First**: App works independently without backend dependencies
 
-**⚡ Orbix will be killing it!!**
+**⚡ Zarfa will be killing it!!**
 
 ---
 
 ## 🌟 Why Monad Blockchain?
 
-Orbix leverages the unique advantages of the Monad blockchain:
+Zarfa leverages the unique advantages of the Monad blockchain:
 
 - **Lightning-Fast Finality**: ~1 second block time enables real-time payments
 - **EVM Compatibility**: Full Ethereum tooling support and Solidity smart contracts
@@ -482,7 +482,7 @@ Orbix leverages the unique advantages of the Monad blockchain:
 
 ## 🤝 Contributing
 
-We welcome contributions to Orbix! Please follow these steps:
+We welcome contributions to Zarfa! Please follow these steps:
 
 1. Fork the repository
 2. Create a feature branch (`git checkout -b feature/amazing-feature`)

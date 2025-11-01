@@ -43,7 +43,7 @@ export const useEmployees = () => {
       setLoading(true);
 
       // Get employees from localStorage
-      const localStorageKey = `Orbix_employees_${walletAddress}`;
+      const localStorageKey = `Zarfa_employees_${walletAddress}`;
       const storedEmployees = localStorage.getItem(localStorageKey);
 
       if (storedEmployees) {
@@ -125,7 +125,7 @@ export const useEmployees = () => {
       setEmployees(updatedEmployees);
 
       // Save to localStorage
-      const localStorageKey = `Orbix_employees_${walletAddress}`;
+      const localStorageKey = `Zarfa_employees_${walletAddress}`;
       localStorage.setItem(localStorageKey, JSON.stringify(updatedEmployees));
 
       console.log("Added employee to localStorage:", newEmployee);
@@ -177,7 +177,7 @@ export const useEmployees = () => {
       setEmployees(updatedEmployees);
 
       // Save to localStorage
-      const localStorageKey = `Orbix_employees_${walletAddress}`;
+      const localStorageKey = `Zarfa_employees_${walletAddress}`;
       localStorage.setItem(localStorageKey, JSON.stringify(updatedEmployees));
 
       console.log("Updated employee in localStorage:", updatedEmployee);
@@ -214,7 +214,7 @@ export const useEmployees = () => {
       setEmployees(updatedEmployees);
 
       // Save to localStorage
-      const localStorageKey = `Orbix_employees_${walletAddress}`;
+      const localStorageKey = `Zarfa_employees_${walletAddress}`;
       localStorage.setItem(localStorageKey, JSON.stringify(updatedEmployees));
 
       console.log("Deleted employee from localStorage, ID:", id);

@@ -526,7 +526,7 @@ The all-time low was $${priceData.atl?.toFixed(
 
 const fallbackResponses = {
   greeting: [
-    "Hey there! I'm your AI assistant here at Orbix. I know quite a bit about your company data, payroll stuff, and of course Monad and crypto in general. What's up? What would you like to chat about?",
+    "Hey there! I'm your AI assistant here at Zarfa. I know quite a bit about your company data, payroll stuff, and of course Monad and crypto in general. What's up? What would you like to chat about?",
     "Hi! I'm here to help with anything related to your business, Monad (MON) prices, employee data, or just general crypto talk. I've got access to live market data and your company analytics. What can I help you with?",
     "Hello! I'm your friendly AI assistant. I can dig into your employee data, check crypto prices, explain blockchain stuff, or just have a chat about business. What's on your mind today?",
   ],

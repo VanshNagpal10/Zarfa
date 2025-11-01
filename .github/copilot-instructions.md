@@ -1,7 +1,7 @@
-# Orbix AI Development Guide
+# Zarfa AI Development Guide
 
 ## Project Overview
-Orbix is a blockchain-based VAT refund and payroll payment infrastructure. **Key architectural decision**: The app is currently transitioning from Aptos to Monad blockchain (EVM-compatible), with legacy Aptos code still present in the codebase.
+Zarfa is a blockchain-based VAT refund and payroll payment infrastructure. **Key architectural decision**: The app is currently transitioning from Aptos to Monad blockchain (EVM-compatible), with legacy Aptos code still present in the codebase.
 
 ## Critical Blockchain Context
 
@@ -24,12 +24,12 @@ All user data (employees, payments) uses **localStorage as the primary store**, 
 
 ```typescript
 // Pattern used in src/hooks/useEmployees.ts and usePayments.ts
-const localStorageKey = `Orbix_employees_${walletAddress}`;
+const localStorageKey = `Zarfa_employees_${walletAddress}`;
 localStorage.setItem(localStorageKey, JSON.stringify(data));
 ```
 
 **When adding data features**:
-1. Store keyed by wallet address: `Orbix_{datatype}_${walletAddress}`
+1. Store keyed by wallet address: `Zarfa_{datatype}_${walletAddress}`
 2. Try localStorage first, Supabase second
 3. Continue on Supabase failures (graceful degradation)
 
@@ -78,7 +78,7 @@ aptos move compile    # Compiles but won't deploy to Monad
 ### Adding a New Data Type
 1. Define interface in `src/lib/supabase.ts`
 2. Create custom hook in `src/hooks/use{DataType}.ts` following `useEmployees` pattern
-3. Use localStorage key: `Orbix_{datatype}_${walletAddress}`
+3. Use localStorage key: `Zarfa_{datatype}_${walletAddress}`
 4. Add Supabase table as optional (wrap in try-catch)
 
 ### Adding Blockchain Transactions
@@ -148,3 +148,4 @@ When implementing new features, consider the project roadmap from README.md:
 - Multi-country VAT expansion (requires contract deployment)
 - Enterprise API development
 - DAO governance features
+

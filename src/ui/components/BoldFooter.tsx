@@ -77,7 +77,7 @@ const BoldFooterRoot = React.forwardRef<HTMLElement, BoldFooterRootProps>(
 
           <div className="flex w-full max-w-[768px] flex-col items-center gap-4">
             <span className="font-['Montserrat'] text-[14px] font-[500] leading-[20px] text-subtext-color text-center">
-              © Orbix 2025
+              © Zarfa 2025
             </span>
             <span className="font-['Montserrat'] text-[14px] font-[500] leading-[20px] text-subtext-color text-center">
               Revolutionary AI-powered payroll solution built on Aptos

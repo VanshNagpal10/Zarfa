@@ -7,7 +7,7 @@ import { useWallet } from "../contexts/WalletContext";
 import type { User as SupabaseUser } from "@supabase/supabase-js";
 import { Button } from "../ui/components/Button";
 import ConnectButton from "../utils/connect-wallet";
-import OrbixLogo from "./OrbixLogo";
+import ZarfaLogo from "./ZarfaLogo";
 
 interface HeaderProps {
   activeTab: string;
@@ -107,9 +107,9 @@ export const Header: React.FC<HeaderProps> = ({
             onClick={() => setActiveTab("landing")}
             className="flex items-center space-x-3 hover:opacity-80 transition-opacity"
           >
-            <OrbixLogo />
+            <ZarfaLogo />
             <div>
-              <h1 className="text-xl font-bold text-gray-900">Orbix</h1>
+              <h1 className="text-xl font-bold text-gray-900">Zarfa</h1>
             </div>
           </button>
 
@@ -150,11 +150,11 @@ export const Header: React.FC<HeaderProps> = ({
 
           {/* Right side actions */}
           <div className="flex items-center space-x-4">
-            {/* Brand Mark (Orbix) */}
+            {/* Brand Mark (Zarfa) */}
             <div className="hidden sm:block">
               <img
                 src="/logo.png"
-                alt="Orbix"
+                alt="Zarfa"
                 className="w-10 h-10 object-contain"
               />
             </div>
