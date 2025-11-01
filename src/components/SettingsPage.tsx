@@ -169,7 +169,7 @@ export const SettingsPage: React.FC<SettingsPageProps> = ({ onBack }) => {
       const jsonUrl = URL.createObjectURL(jsonBlob);
       const jsonLink = document.createElement("a");
       jsonLink.href = jsonUrl;
-      jsonLink.download = `aptos-pay-data-export-${
+      jsonLink.download = `monad-pay-data-export-${
         new Date().toISOString().split("T")[0]
       }.json`;
       document.body.appendChild(jsonLink);
@@ -210,7 +210,7 @@ export const SettingsPage: React.FC<SettingsPageProps> = ({ onBack }) => {
         const csvUrl = URL.createObjectURL(csvBlob);
         const csvLink = document.createElement("a");
         csvLink.href = csvUrl;
-        csvLink.download = `aptos-pay-employees-${
+        csvLink.download = `monad-pay-employees-${
           new Date().toISOString().split("T")[0]
         }.csv`;
         document.body.appendChild(csvLink);

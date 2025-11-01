@@ -8,6 +8,7 @@ import { EmployeePaymentHistoryModal } from "./EmployeePaymentHistoryModal";
 import { AllActivityPage } from "./AllActivityPages";
 import { VATRefundOverview } from "./VATRefundOverview";
 import { WalletStatus } from "./WalletStatus";
+import { BusinessMetricsDashboard } from "./BusinessMetricsDashboard";
 import type { Employee } from "../lib/supabase";
 
 interface DashboardProps {
@@ -101,6 +102,11 @@ export const Dashboard: React.FC<DashboardProps> = ({
         {/* Wallet Status Section */}
         <div className="mb-4 sm:mb-8">
           <WalletStatus />
+        </div>
+
+        {/* Business Metrics Dashboard */}
+        <div className="mb-4 sm:mb-8">
+          <BusinessMetricsDashboard />
         </div>
 
         {/* Bottom Section - Stack on mobile */}

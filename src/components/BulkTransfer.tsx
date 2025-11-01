@@ -186,11 +186,11 @@ export const BulkTransfer: React.FC<BulkTransferProps> = ({
               <div className="flex items-center space-x-2">
                 <X className="w-4 h-4 sm:w-5 sm:h-5 text-yellow-600" />
                 <span className="text-yellow-800 font-medium text-sm sm:text-base">
-                  Petra Wallet Not Connected
+                  MetaMask Wallet Not Connected
                 </span>
               </div>
               <p className="text-yellow-700 text-xs sm:text-sm mt-1">
-                Please connect your Petra wallet to send payments
+                Please connect your MetaMask wallet to send payments
               </p>
             </div>
           )}
@@ -213,7 +213,7 @@ export const BulkTransfer: React.FC<BulkTransferProps> = ({
                     onChange={(e) => setSelectedToken(e.target.value)}
                     className="bg-gray-100 border border-gray-300 text-gray-900 rounded-lg px-3 py-2 sm:px-4 sm:py-3 w-full focus:ring-2 focus:ring-black focus:border-transparent transition-all duration-200 text-sm sm:text-base"
                   >
-                    <option value="APT">APT</option>
+                    <option value="MON">MON</option>
                     <option value="USDC">USDC</option>
                   </select>
                 </div>
@@ -254,7 +254,7 @@ export const BulkTransfer: React.FC<BulkTransferProps> = ({
                     <div className="flex justify-between">
                       <span className="text-gray-600">Network Fees:</span>
                       <span className="text-gray-900">
-                        {(selectedEmployees.length * 0.001).toFixed(3)} APT
+                        {(selectedEmployees.length * 0.001).toFixed(3)} MON
                       </span>
                     </div>
                     <div className="flex justify-between">
@@ -424,7 +424,7 @@ export const BulkTransfer: React.FC<BulkTransferProps> = ({
                         <span>Processing Payments...</span>
                       </div>
                     ) : !isWalletConnected ? (
-                      "Connect Petra Wallet to Send Payments"
+                      "Connect MetaMask Wallet to Send Payments"
                     ) : selectedEmployees.length === 0 ? (
                       "Select Recipients to Preview Payments"
                     ) : (

@@ -5,14 +5,16 @@ import {
   getConnectedAccount,
   isWalletConnected,
   formatAddress,
-} from "../utils/aptos";
+} from "../utils/monad";
+import { fetchCryptoPrice } from "../services/priceService";
 
 export const TokenBalance: React.FC = () => {
   const [isLoading, setIsLoading] = useState(true);
   const [walletAddress, setWalletAddress] = useState("");
+  const [monPrice, setMonPrice] = useState(0);
   const [balances, setBalances] = useState({
     totalUSD: 0,
-    apt: 0,
+    mon: 0,
     totalCoins: 0,
     assets: [] as Array<{
       assetId: string;
@@ -32,17 +34,20 @@ export const TokenBalance: React.FC = () => {
 
         const accountBalance = await getAccountBalance();
 
-        // Calculate total USD value (simplified calculation)
-        const aptPrice = 12.5; // Example APT price in USD
-        const totalUSD = accountBalance.apt * aptPrice;
+        // Fetch real-time MON price from CoinGecko (fallback to 0 for testnet)
+        const priceData = await fetchCryptoPrice("monad");
+        const currentMonPrice = priceData?.price || 0;
+        setMonPrice(currentMonPrice);
+        
+        const totalUSD = accountBalance.mon * currentMonPrice;
 
-        // Count total assets (APT + other assets)
+        // Count total assets (MON + other assets)
         const totalCoins =
-          (accountBalance.apt > 0 ? 1 : 0) + accountBalance.assets.length;
+          (accountBalance.mon > 0 ? 1 : 0) + accountBalance.assets.length;
 
         setBalances({
           totalUSD: totalUSD,
-          apt: accountBalance.apt,
+          mon: accountBalance.mon,
           totalCoins: totalCoins,
           assets: accountBalance.assets,
         });
@@ -51,7 +56,7 @@ export const TokenBalance: React.FC = () => {
         setWalletAddress("");
         setBalances({
           totalUSD: 0,
-          apt: 0,
+          mon: 0,
           totalCoins: 0,
           assets: [],
         });
@@ -61,7 +66,7 @@ export const TokenBalance: React.FC = () => {
       // Show fallback data on error
       setBalances({
         totalUSD: 0,
-        apt: 0,
+        mon: 0,
         totalCoins: 0,
         assets: [],
       });
@@ -95,10 +100,12 @@ export const TokenBalance: React.FC = () => {
     symbol,
     amount,
     unitName,
+    currentPrice,
   }: {
     symbol: string;
     amount: number;
     unitName?: string;
+    currentPrice?: number;
   }) => (
     <div className="flex items-center justify-between py-2 sm:py-3 border-b border-gray-200 last:border-b-0">
       <div className="flex items-center space-x-2 sm:space-x-3">
@@ -120,12 +127,12 @@ export const TokenBalance: React.FC = () => {
       </div>
       <div className="text-right">
         <div className="font-medium text-gray-900 text-sm sm:text-base">
-          {symbol === "APT" ? `$${(amount * 0.24).toFixed(2)}` : "--"}
+          {symbol === "MON" && currentPrice ? `$${(amount * currentPrice).toFixed(2)}` : "--"}
         </div>
-        {symbol === "APT" && (
+        {symbol === "MON" && currentPrice && currentPrice > 0 && (
           <div className="text-xs sm:text-sm flex items-center text-green-500">
             <TrendingUp className="w-2 h-2 sm:w-3 sm:h-3 mr-1" />
-            +2%
+            Live
           </div>
         )}
       </div>
@@ -222,9 +229,14 @@ export const TokenBalance: React.FC = () => {
 
           {/* Token List */}
           <div className="space-y-1 mb-4 sm:mb-6">
-            {/* APT Balance */}
-            {balances.apt > 0 && (
-              <TokenRow symbol="APT" amount={balances.apt} unitName="APT" />
+            {/* MON Balance */}
+            {balances.mon > 0 && (
+              <TokenRow 
+                symbol="MON" 
+                amount={balances.mon} 
+                unitName="MON" 
+                currentPrice={monPrice}
+              />
             )}
 
             {/* Other Assets */}
@@ -234,11 +246,12 @@ export const TokenBalance: React.FC = () => {
                 symbol={asset.symbol}
                 amount={asset.amount}
                 unitName={asset.name}
+                currentPrice={asset.symbol === "MON" ? monPrice : undefined}
               />
             ))}
 
             {/* Empty state when no tokens */}
-            {balances.apt === 0 && balances.assets.length === 0 && (
+            {balances.mon === 0 && balances.assets.length === 0 && (
               <div className="text-center py-6 sm:py-8 text-gray-500">
                 <div className="text-xs sm:text-sm">No tokens found</div>
                 <div className="text-xs text-gray-400 mt-1">
@@ -267,7 +280,7 @@ export const TokenBalance: React.FC = () => {
                     balances.totalCoins !== 1 ? "s" : ""
                   } worth $${balances.totalUSD.toFixed(2)}`
                 : isWalletConnected()
-                ? "Consider adding APT or other assets to your wallet"
+                ? "Consider adding MON or other assets to your wallet"
                 : "Connect your wallet to see real-time balance insights"}
             </div>
           </div>

@@ -1,7 +1,8 @@
 import { useState, useEffect } from "react";
 import { supabase } from "../lib/supabase";
-import type { Employee, EmployeeWithPayments } from "../lib/supabase";
-import { useWallet } from "@aptos-labs/wallet-adapter-react";
+import type { Employee, EmployeeWithPayments, Payment } from "../lib/supabase";
+import { useWallet } from "../contexts/WalletContext";
+
 // Helper function to generate a UUID
 function generateUUID() {
   return "xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx".replace(/[xy]/g, function (c) {
@@ -16,19 +17,20 @@ export const useEmployees = () => {
   const [employees, setEmployees] = useState<Employee[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-  const { account, connected } = useWallet();
+  const { address, isConnected } = useWallet();
+  
   // Check wallet connection on hook initialization
   useEffect(() => {
     const checkWalletConnection = () => {
-      if (connected && account?.address) {
-        setWalletAddress(account.address);
+      if (isConnected && address) {
+        setWalletAddress(address);
       } else {
         setWalletAddress(null);
       }
     };
 
     checkWalletConnection();
-  }, []);
+  }, [address, isConnected]);
 
   const fetchEmployees = async () => {
     if (!walletAddress) {
@@ -245,7 +247,7 @@ export const useEmployees = () => {
       }
 
       // For payments, we'll still try to get from Supabase if possible
-      let payments: any[] = [];
+      let payments: Payment[] = [];
 
       try {
         const { data: paymentsData, error: payError } = await supabase

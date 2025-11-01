@@ -7,9 +7,9 @@ import {
   Wallet,
 } from "lucide-react";
 import {
-  connectWallet as aptosConnectWallet,
+  connectWallet as monadConnectWallet,
   getConnectedAccount,
-} from "../utils/aptos";
+} from "../utils/monad";
 
 interface VATRefundSectionProps {
   refreshKey?: number;
@@ -72,7 +72,7 @@ export const VATRefundSection: React.FC<VATRefundSectionProps> = ({
     try {
       // Connect wallet directly if not connected
       if (!getConnectedAccount()) {
-        await aptosConnectWallet();
+        await monadConnectWallet();
       }
 
       // Simulate transaction signing with connected wallet
@@ -227,7 +227,7 @@ export const VATRefundSection: React.FC<VATRefundSectionProps> = ({
                 <div className="flex justify-between text-xs">
                   <span className="text-blue-700">Network:</span>
                   <span className="font-medium text-blue-900">
-                    Aptos Testnet
+                    Monad Testnet
                   </span>
                 </div>
               </div>

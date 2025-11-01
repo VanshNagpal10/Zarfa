@@ -3,7 +3,7 @@ import { Bell, User, Menu, X, LogOut, Settings } from "lucide-react";
 import { useState } from "react";
 import { formatAddress } from "../utils/aptos";
 import { useAuth } from "../hooks/useAuth";
-import { useWallet } from "@aptos-labs/wallet-adapter-react";
+import { useWallet } from "../contexts/WalletContext";
 import type { User as SupabaseUser } from "@supabase/supabase-js";
 import { Button } from "../ui/components/Button";
 import ConnectButton from "../utils/connect-wallet";

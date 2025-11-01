@@ -9,6 +9,7 @@ import { AIAssistantPage } from "./AIAssistantPage";
 import { ChatHistoryPage } from "./ChatHistoryPage";
 import { EmployeePaymentHistoryModal } from "./EmployeePaymentHistoryModal";
 import { VATRefundPage } from "./VATRefundPage";
+import { AIReceiptDemo } from "./AIReceiptDemo";
 import { useWallet } from "../contexts/WalletContext";
 import { motion, AnimatePresence } from "framer-motion";
 import { useEmployees } from "../hooks/useEmployees";
@@ -37,6 +38,7 @@ const DashboardLayout: React.FC<DashboardLayoutProps> = ({
         "employees",
         "bulk-transfer",
         "vat-refund",
+        "ai-receipt-demo",
         "ai-assistant-chat",
         "ai-assistant-history",
         "settings",
@@ -195,6 +197,8 @@ const DashboardLayout: React.FC<DashboardLayoutProps> = ({
         );
       case "vat-refund":
         return <VATRefundPage onBack={() => setActiveTab("dashboard")} />;
+      case "ai-receipt-demo":
+        return <AIReceiptDemo />;
       case "ai-assistant-chat":
         return (
           <AIAssistantPage

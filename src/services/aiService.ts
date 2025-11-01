@@ -19,9 +19,36 @@ if (!GEMINI_API_KEY) {
 
 const genAI = GEMINI_API_KEY ? new GoogleGenerativeAI(GEMINI_API_KEY) : null;
 
+interface Employee {
+  id: string;
+  name: string;
+  email: string;
+  designation: string;
+  department: string;
+  salary: number;
+  wallet_address: string;
+  join_date: string;
+  status: 'active' | 'inactive';
+  created_at?: string;
+  hire_date?: string;
+}
+
+interface Payment {
+  id: string;
+  employee_id: string;
+  amount: number;
+  token: string;
+  transaction_hash?: string;
+  status: 'pending' | 'completed' | 'failed';
+  payment_date: string;
+  created_at?: string;
+  employee_name?: string;
+  transaction_id?: string;
+}
+
 export interface AIContext {
-  employees: any[];
-  payments: any[];
+  employees: Employee[];
+  payments: Payment[];
   companyName: string;
 }
 
@@ -34,7 +61,7 @@ interface ConversationMemory {
   topics: string[];
   entities: string[];
   intent: string;
-  context: any;
+  context: Record<string, unknown>;
 }
 
 interface ThinkingContext {
@@ -42,7 +69,7 @@ interface ThinkingContext {
   primaryCrypto: string;
   userIntent: string;
   conversationPhase: "initial" | "exploring" | "deep_dive" | "comparative";
-  establishedFacts: { [key: string]: any };
+  establishedFacts: Record<string, unknown>;
   userPreferences: string[];
   recentQuestions: string[];
 }
@@ -122,7 +149,14 @@ const analyzeMessage = (
   return { topics, entities, intent };
 };
 
-const updateThinkingContext = (message: string, analysis: any) => {
+const updateThinkingContext = (
+  message: string,
+  analysis: {
+    topics: string[];
+    entities: string[];
+    intent: string;
+  }
+) => {
   // Update primary crypto
   if (
     analysis.entities.includes("bitcoin") ||
@@ -590,7 +624,7 @@ export const generateAIResponse = async (
 
   try {
     const model = genAI.getGenerativeModel({
-      model: "gemini-1.5-flash-latest",
+      model: "gemini-2.5-pro",
       generationConfig: {
         temperature: 0.95,
         topK: 40,
@@ -648,6 +682,224 @@ export const generateAIResponse = async (
     addToMemory(correctedMessage, response, "error_fallback");
     return response;
   }
+};
+
+// Receipt processing for VAT refunds
+export interface VATReceiptData {
+  vatAmount: number;
+  totalAmount: number;
+  merchantName: string;
+  merchantAddress: string;
+  receiptNumber: string;
+  purchaseDate: string;
+  vatRegistrationNumber: string;
+  confidence: number;
+  extractedText?: string;
+}
+
+export const processVATReceipt = async (imageFile: File): Promise<VATReceiptData> => {
+  console.log("🧾 Processing VAT receipt with AI:", imageFile.name);
+  console.log("📁 File type:", imageFile.type);
+  console.log("📏 File size:", (imageFile.size / 1024).toFixed(2), "KB");
+
+  if (!genAI) {
+    console.warn("⚠️ Gemini API not available, using mock data");
+    // Return mock data for testing
+    return {
+      vatAmount: 15.0,
+      totalAmount: 100.0,
+      merchantName: "Sample Store",
+      merchantAddress: "123 Main St, City",
+      receiptNumber: "REC-" + Date.now(),
+      purchaseDate: new Date().toISOString().split('T')[0],
+      vatRegistrationNumber: "VAT-123456789",
+      confidence: 0.85,
+    };
+  }
+
+  try {
+    console.log("🔄 Converting file to base64...");
+    // Convert image to base64
+    const imageData = await fileToBase64(imageFile);
+    console.log("✅ Base64 conversion complete");
+    
+    // Use Gemini 2.5 Pro (latest model)
+    const model = genAI.getGenerativeModel({
+      model: "gemini-2.5-pro",
+    });
+    console.log("🤖 Gemini model initialized: gemini-2.5-pro");
+
+    const prompt = `You are an expert at reading receipts, invoices, and tax documents. Your task is to extract VAT/tax information from this document.
+
+CRITICAL INSTRUCTIONS - READ CAREFULLY:
+
+1. FIRST, read ALL visible text in the document from top to bottom
+2. Look at tables, line items, and totals sections carefully
+3. Find these EXACT pieces of information:
+
+MERCHANT/COMPANY INFO:
+- Company name is usually at the TOP of the document (first text block)
+- Address is usually right below the company name
+- VAT registration number is often near the company info or at the bottom
+
+FINANCIAL INFORMATION:
+- Look for a table or list showing:
+  * "Subtotal" or "Net Amount" (amount before VAT)
+  * "VAT" or "Tax" or "GST" (the tax amount charged)
+  * "Total" or "Total with VAT" or "Amount Due" (final amount including VAT)
+- If you see a VAT percentage (like "20% VAT"), CALCULATE the amount:
+  Example: Subtotal £200, VAT 20% → VAT Amount = £200 × 0.20 = £40
+
+DOCUMENT IDENTIFIERS:
+- Receipt/Invoice number: Look for "Invoice no.", "Receipt no.", "Order no.", "Document no."
+- Date: Look for "Date:", "Invoice Date:", "Purchase Date:" - convert to YYYY-MM-DD format
+
+CONFIDENCE SCORING RULES:
+- If you can READ and EXTRACT all fields clearly → confidence = 0.9
+- If you can extract most fields (missing 1-2) → confidence = 0.7
+- If you extract some fields but many are missing → confidence = 0.5
+- If the document is unreadable or you can't extract anything → confidence = 0.1
+
+IMPORTANT: Even if some fields are missing, if you can clearly see the VAT amount and total, set confidence to at least 0.7!
+
+OUTPUT FORMAT (respond ONLY with this JSON, no other text):
+{
+  "vatAmount": <number (just the number, no currency symbol)>,
+  "totalAmount": <number (total including VAT)>,
+  "merchantName": "<company name from top of document>",
+  "merchantAddress": "<full address or 'Not found'>",
+  "receiptNumber": "<invoice/receipt number or 'Not found'>",
+  "purchaseDate": "<YYYY-MM-DD format>",
+  "vatRegistrationNumber": "<VAT reg number or empty string>",
+  "confidence": <0.0 to 1.0 - be generous if you can read the key financial data>
+}
+
+Example of good extraction (confidence 0.9):
+{
+  "vatAmount": 40.00,
+  "totalAmount": 240.00,
+  "merchantName": "Apple Store UK",
+  "merchantAddress": "123 Oxford Street, London, W1D 2LG",
+  "receiptNumber": "INV-2024-001234",
+  "purchaseDate": "2024-11-01",
+  "vatRegistrationNumber": "GB123456789",
+  "confidence": 0.9
+}
+
+NOW ANALYZE THE DOCUMENT AND RETURN ONLY THE JSON.`;
+
+    console.log("📤 Sending request to Gemini API...");
+    console.log("📋 Prompt length:", prompt.length, "characters");
+
+    // First, extract all text from the document
+    console.log("📖 Step 1: Extracting all text from document...");
+    const textExtractionPrompt = "Extract ALL visible text from this document. List everything you can see, line by line, exactly as it appears.";
+    
+    const textResult = await model.generateContent([
+      textExtractionPrompt,
+      {
+        inlineData: {
+          data: imageData.split(',')[1],
+          mimeType: imageFile.type,
+        },
+      },
+    ]);
+
+    const extractedText = await textResult.response.text();
+    console.log("📄 Extracted Text from Document:");
+    console.log(extractedText);
+    console.log("=" .repeat(50));
+
+    // Now use the extracted text + image for structured data extraction
+    console.log("🔍 Step 2: Extracting structured data...");
+    const result = await model.generateContent([
+      prompt,
+      {
+        inlineData: {
+          data: imageData.split(',')[1], // Remove data:image/...;base64, prefix
+          mimeType: imageFile.type,
+        },
+      },
+    ]);
+
+    const response = await result.response;
+    const text = response.text();
+    
+    console.log("📥 Raw AI Response received");
+    console.log("📄 Response length:", text.length, "characters");
+    console.log("🤖 Full AI Response:", text);
+
+    // Clean up the response - remove markdown code blocks if present
+    const jsonText = text
+      .replace(/```json\n?/g, '')
+      .replace(/```\n?/g, '')
+      .trim();
+
+    console.log("🧹 Cleaned JSON text:", jsonText);
+
+    // Parse the JSON response
+    let receiptData: VATReceiptData;
+    try {
+      receiptData = JSON.parse(jsonText);
+      console.log("✅ JSON parsed successfully");
+    } catch (parseError) {
+      console.error("❌ JSON Parse Error:", parseError);
+      console.error("📄 Failed to parse:", jsonText);
+      throw new Error(`Failed to parse AI response: ${parseError instanceof Error ? parseError.message : 'Unknown error'}`);
+    }
+
+    // Validate and sanitize the data
+    console.log("🔍 Validating extracted data...");
+    receiptData.vatAmount = Number(receiptData.vatAmount) || 0;
+    receiptData.totalAmount = Number(receiptData.totalAmount) || 0;
+    receiptData.confidence = Math.min(Math.max(Number(receiptData.confidence) || 0, 0), 1);
+    receiptData.extractedText = text;
+
+    console.log("✅ Receipt processed successfully:");
+    console.log("  💰 VAT Amount:", receiptData.vatAmount);
+    console.log("  💵 Total Amount:", receiptData.totalAmount);
+    console.log("  🏪 Merchant:", receiptData.merchantName);
+    console.log("  🧾 Receipt No:", receiptData.receiptNumber);
+    console.log("  📅 Date:", receiptData.purchaseDate);
+    console.log("  🎯 Confidence:", (receiptData.confidence * 100).toFixed(1) + "%");
+    
+    return receiptData;
+
+  } catch (error) {
+    console.error("❌ Error processing receipt:", error);
+    console.error("🔍 Error type:", error instanceof Error ? error.constructor.name : typeof error);
+    console.error("📄 Error message:", error instanceof Error ? error.message : String(error));
+    console.error("📚 Error stack:", error instanceof Error ? error.stack : 'No stack trace');
+    
+    // Return fallback data with low confidence
+    return {
+      vatAmount: 0,
+      totalAmount: 0,
+      merchantName: "Unable to extract",
+      merchantAddress: "",
+      receiptNumber: "MANUAL-" + Date.now(),
+      purchaseDate: new Date().toISOString().split('T')[0],
+      vatRegistrationNumber: "",
+      confidence: 0.1,
+      extractedText: error instanceof Error ? error.message : "Processing failed",
+    };
+  }
+};
+
+// Helper function to convert File to base64
+const fileToBase64 = (file: File): Promise<string> => {
+  return new Promise((resolve, reject) => {
+    const reader = new FileReader();
+    reader.onload = () => {
+      if (typeof reader.result === 'string') {
+        resolve(reader.result);
+      } else {
+        reject(new Error('Failed to convert file to base64'));
+      }
+    };
+    reader.onerror = reject;
+    reader.readAsDataURL(file);
+  });
 };
 
 export const generateCompanyInsights = (context: AIContext) => {

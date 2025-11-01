@@ -18,6 +18,8 @@ import {
   isValidAddress,
 } from "../utils/monad";
 import { usePayments } from "../hooks/usePayments";
+import { VATRefundFeeInfo } from "./PlatformFeeInfo";
+import { processVATReceipt, VATReceiptData } from "../services/aiService";
 
 interface VATRefundPageProps {
   onBack?: () => void;
@@ -42,6 +44,8 @@ export const VATRefundPage: React.FC<VATRefundPageProps> = () => {
   const [refundHistory, setRefundHistory] = useState<any[]>([]);
   const [isHistoryLoading, setIsHistoryLoading] = useState(false);
   const [refreshKey, setRefreshKey] = useState(0);
+  const [aiExtractedData, setAiExtractedData] = useState<VATReceiptData | null>(null);
+  const [isProcessingReceipt, setIsProcessingReceipt] = useState(false);
 
   // Form fields for manual entry
   const [formData, setFormData] = useState({
@@ -98,15 +102,16 @@ export const VATRefundPage: React.FC<VATRefundPageProps> = () => {
     if (e.target.files && e.target.files[0]) {
       const file = e.target.files[0];
 
-      // Validate file type
+      // Validate file type - now supporting images for AI processing
       const allowedTypes = [
         "application/pdf",
         "image/jpeg",
         "image/png",
         "image/jpg",
+        "image/webp",
       ];
       if (!allowedTypes.includes(file.type)) {
-        setErrorMessage("Please select a valid file type (PDF, JPG, PNG)");
+        setErrorMessage("Please select a valid file type (PDF, JPG, PNG, WEBP)");
         return;
       }
 
@@ -119,17 +124,16 @@ export const VATRefundPage: React.FC<VATRefundPageProps> = () => {
 
       setSelectedFile(file);
       setErrorMessage(null);
-
-      // Simulate VAT calculation based on file - limited to 0.01 maximum
-      setRefundAmount(0.01);
+      setAiExtractedData(null); // Reset AI data on new file
 
       console.log(
-        "File selected:",
+        "✅ File selected:",
         file.name,
         "Size:",
         file.size,
         "Type:",
-        file.type
+        file.type,
+        "- Ready for AI processing"
       );
     }
   };
@@ -154,27 +158,53 @@ export const VATRefundPage: React.FC<VATRefundPageProps> = () => {
     }
 
     setIsLoading(true);
+    setIsProcessingReceipt(true);
     setErrorMessage(null);
 
     try {
-      // Process the uploaded file
-      console.log("Processing uploaded file:", selectedFile.name);
-      console.log("File size:", selectedFile.size, "bytes");
-      console.log("File type:", selectedFile.type);
+      console.log("🤖 Processing receipt with AI:", selectedFile.name);
 
-      // Simulate document processing with more realistic behavior
-      await new Promise((resolve) => setTimeout(resolve, 2000));
+      // Use AI to extract VAT information from the receipt
+      const extractedData = await processVATReceipt(selectedFile);
+      setAiExtractedData(extractedData);
 
-      // Calculate refund amount based on file processing simulation - limited to 0.01 maximum
-      setRefundAmount(0.01);
+      console.log("✅ AI extracted data:", extractedData);
 
-      console.log("Document processed successfully, estimated refund:", 0.01);
+      // Check if extraction was successful (confidence > 0.3)
+      if (extractedData.confidence < 0.3) {
+        setErrorMessage(
+          `AI could not extract receipt information with confidence (${(extractedData.confidence * 100).toFixed(0)}%). Please use manual entry or upload a clearer image.`
+        );
+        setIsLoading(false);
+        setIsProcessingReceipt(false);
+        return;
+      }
+
+      // Auto-fill form data with AI-extracted information
+      setFormData({
+        ...formData,
+        vatAmount: extractedData.vatAmount.toString(),
+        billAmount: extractedData.totalAmount.toString(),
+        receiptNo: extractedData.receiptNumber,
+        vatRegNo: extractedData.vatRegistrationNumber,
+        purchaseDate: extractedData.purchaseDate,
+        merchantName: extractedData.merchantName,
+        merchantAddress: extractedData.merchantAddress,
+      });
+
+      // Calculate refund amount (VAT amount is what gets refunded)
+      setRefundAmount(extractedData.vatAmount);
+
+      console.log("📊 Refund amount calculated:", extractedData.vatAmount);
       setStep("review");
     } catch (error) {
-      console.error("Upload processing error:", error);
-      setErrorMessage("Failed to process document. Please try again.");
+      console.error("❌ AI processing error:", error);
+      setErrorMessage(
+        "Failed to process receipt with AI. Please try manual entry or upload a clearer image."
+      );
     } finally {
       setIsLoading(false);
+      setIsProcessingReceipt(false);
     }
   };
 
@@ -197,9 +227,9 @@ export const VATRefundPage: React.FC<VATRefundPageProps> = () => {
         // Try to connect
         try {
           await connectWallet();
-          console.log("Mock wallet connected for payment processing");
+          console.log("Wallet connected successfully for payment processing");
         } catch (connectError) {
-          console.error("Failed to connect mock wallet:", connectError);
+          console.error("Failed to connect wallet:", connectError);
           throw new Error(
             "Failed to connect wallet. Please try connecting again."
           );
@@ -228,8 +258,22 @@ export const VATRefundPage: React.FC<VATRefundPageProps> = () => {
         token: "native",
       });
 
+      // Move to sign step and let handleSign process the actual payment with hardcoded 0.1 MON
       setStep("sign");
+      
+      // For manual entry, automatically trigger handleSign to process the payment
+      if (entryMode === "manual") {
+        console.log("🚀 Manual entry - auto-triggering wallet transaction");
+        setIsLoading(false);
+        setTimeout(() => {
+          handleSign();
+        }, 800);
+        return;
+      }
 
+      setIsLoading(false);
+
+      /* COMMENTED OUT - Let handleSign process the actual payment with hardcoded 0.1 MON
       // Import the sendPayment function dynamically
       const { sendPayment } = await import("../utils/monad");
 
@@ -265,6 +309,7 @@ export const VATRefundPage: React.FC<VATRefundPageProps> = () => {
       // Keep the existing QR code (which contains the transaction details)
       // Don't overwrite with a fake URL
       setTransactionStatus("confirmed");
+      */
     } catch (error) {
       console.error("Error in handleApprove:", error);
       let errorMessage = "An unexpected error occurred";
@@ -315,26 +360,30 @@ export const VATRefundPage: React.FC<VATRefundPageProps> = () => {
       // Import the sendBulkPayment function dynamically
       const { sendBulkPayment } = await import("../utils/monad");
 
-      // Prepare payment data
+      // HARDCODED: Always send exactly 0.1 MON to the entered wallet address
+      const FIXED_REFUND_AMOUNT = 0.1;
+      console.log("💰 VAT Refund: Sending fixed amount of", FIXED_REFUND_AMOUNT, "MON to", recipientAddress);
+
+      // Prepare payment data with hardcoded 0.1 MON
       const recipientsData = [
         {
           address: recipientAddress,
-          amount: refundAmount,
+          amount: FIXED_REFUND_AMOUNT,
         },
       ];
 
-      // Process the payment using sendBulkPayment with MetaMask integration
-      const result = await sendBulkPayment(recipientsData, selectedToken);
+      // Process the payment using sendBulkPayment with MetaMask integration (always in MON)
+      const result = await sendBulkPayment(recipientsData, "MON");
 
       if (result.success && result.txHash) {
         setTransactionHash(result.txHash);
 
-        // Record the payment
+        // Record the payment with hardcoded 0.1 MON amount
         try {
           await createPayment({
             employee_id: "vat-refund", // Special ID for VAT refunds
-            amount: refundAmount,
-            token: selectedToken,
+            amount: FIXED_REFUND_AMOUNT, // Always 0.1 MON
+            token: "MON", // Always MON
             transaction_hash: result.txHash,
             status: "completed",
             payment_date: new Date().toISOString(),
@@ -524,6 +573,23 @@ export const VATRefundPage: React.FC<VATRefundPageProps> = () => {
 
             {entryMode === "upload" ? (
               <>
+                {/* AI Processing Info Banner */}
+                <div className="bg-gradient-to-r from-blue-50 to-purple-50 border border-blue-200 rounded-lg p-4 mb-4">
+                  <div className="flex items-start gap-3">
+                    <div className="bg-blue-100 p-2 rounded-lg">
+                      <svg className="w-5 h-5 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9.663 17h4.673M12 3v1m6.364 1.636l-.707.707M21 12h-1M4 12H3m3.343-5.657l-.707-.707m2.828 9.9a5 5 0 117.072 0l-.548.547A3.374 3.374 0 0014 18.469V19a2 2 0 11-4 0v-.531c0-.895-.356-1.754-.988-2.386l-.548-.547z" />
+                      </svg>
+                    </div>
+                    <div className="flex-1">
+                      <h4 className="font-semibold text-blue-900 mb-1">🤖 AI-Powered Receipt Processing</h4>
+                      <p className="text-sm text-blue-800">
+                        Our AI will automatically extract VAT information from your receipt image, including merchant details, VAT amount, and purchase date. Just upload a clear photo of your receipt!
+                      </p>
+                    </div>
+                  </div>
+                </div>
+
                 {errorMessage && (
                   <div className="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded-lg mb-4">
                     {errorMessage}
@@ -621,7 +687,7 @@ export const VATRefundPage: React.FC<VATRefundPageProps> = () => {
                       !formData.receiverWalletAddress ||
                       isLoading
                     }
-                    className={`bg-gray-900 hover:bg-gray-800 text-white font-medium py-2 px-6 rounded-lg transition-all duration-200 ${
+                    className={`bg-gray-900 hover:bg-gray-800 text-white font-medium py-2 px-6 rounded-lg transition-all duration-200 flex items-center gap-2 ${
                       !selectedFile ||
                       !formData.receiverWalletAddress ||
                       isLoading
@@ -636,7 +702,21 @@ export const VATRefundPage: React.FC<VATRefundPageProps> = () => {
                         : ""
                     }
                   >
-                    {isLoading ? "Processing..." : "Upload Document"}
+                    {isProcessingReceipt ? (
+                      <>
+                        <svg className="animate-spin h-5 w-5" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                          <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+                          <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                        </svg>
+                        AI Processing Receipt...
+                      </>
+                    ) : isLoading ? (
+                      "Processing..."
+                    ) : (
+                      <>
+                        🤖 Process with AI
+                      </>
+                    )}
                   </button>
                 </div>
               </>
@@ -909,17 +989,100 @@ export const VATRefundPage: React.FC<VATRefundPageProps> = () => {
 
             <div className="bg-gray-50 border border-gray-200 rounded-lg p-6 mb-6">
               {entryMode === "upload" ? (
-                <div className="flex items-start mb-4">
-                  <div className="bg-blue-100 p-3 rounded-lg mr-4">
-                    <FileText className="w-6 h-6 text-blue-600" />
+                <>
+                  <div className="flex items-start mb-4">
+                    <div className="bg-blue-100 p-3 rounded-lg mr-4">
+                      <FileText className="w-6 h-6 text-blue-600" />
+                    </div>
+                    <div className="flex-1">
+                      <h3 className="font-semibold text-gray-900">
+                        {selectedFile?.name}
+                      </h3>
+                      <p className="text-sm text-gray-600">Processed by AI just now</p>
+                      {aiExtractedData && (
+                        <div className="mt-2">
+                          <div className="flex items-center gap-2">
+                            <span className="text-xs font-medium text-gray-700">AI Confidence:</span>
+                            <div className="flex-1 bg-gray-200 rounded-full h-2 max-w-32">
+                              <div
+                                className={`h-2 rounded-full ${
+                                  aiExtractedData.confidence > 0.7
+                                    ? "bg-green-500"
+                                    : aiExtractedData.confidence > 0.5
+                                    ? "bg-yellow-500"
+                                    : "bg-orange-500"
+                                }`}
+                                style={{ width: `${aiExtractedData.confidence * 100}%` }}
+                              ></div>
+                            </div>
+                            <span className="text-xs font-semibold text-gray-900">
+                              {(aiExtractedData.confidence * 100).toFixed(0)}%
+                            </span>
+                          </div>
+                        </div>
+                      )}
+                    </div>
                   </div>
-                  <div>
-                    <h3 className="font-semibold text-gray-900">
-                      {selectedFile?.name}
-                    </h3>
-                    <p className="text-sm text-gray-600">Uploaded just now</p>
-                  </div>
-                </div>
+
+                  {/* AI-Extracted Receipt Information */}
+                  {aiExtractedData && (
+                    <div className="border-b border-gray-200 pb-4 mb-4">
+                      <div className="flex items-center gap-2 mb-3">
+                        <h4 className="font-medium text-gray-900">
+                          🤖 AI-Extracted Receipt Information
+                        </h4>
+                      </div>
+                      <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                        <div>
+                          <p className="text-sm text-gray-600">Merchant Name</p>
+                          <p className="text-sm font-medium text-gray-900">
+                            {aiExtractedData.merchantName}
+                          </p>
+                        </div>
+                        <div>
+                          <p className="text-sm text-gray-600">Receipt Number</p>
+                          <p className="text-sm font-medium text-gray-900">
+                            {aiExtractedData.receiptNumber}
+                          </p>
+                        </div>
+                        {aiExtractedData.merchantAddress && (
+                          <div className="md:col-span-2">
+                            <p className="text-sm text-gray-600">Merchant Address</p>
+                            <p className="text-sm font-medium text-gray-900">
+                              {aiExtractedData.merchantAddress}
+                            </p>
+                          </div>
+                        )}
+                        <div>
+                          <p className="text-sm text-gray-600">Purchase Date</p>
+                          <p className="text-sm font-medium text-gray-900">
+                            {aiExtractedData.purchaseDate}
+                          </p>
+                        </div>
+                        {aiExtractedData.vatRegistrationNumber && (
+                          <div>
+                            <p className="text-sm text-gray-600">VAT Registration No.</p>
+                            <p className="text-sm font-medium text-gray-900">
+                              {aiExtractedData.vatRegistrationNumber}
+                            </p>
+                          </div>
+                        )}
+                        <div>
+                          <p className="text-sm text-gray-600">Total Bill Amount</p>
+                          <p className="text-sm font-medium text-gray-900">
+                            ${aiExtractedData.totalAmount.toFixed(2)}
+                          </p>
+                        </div>
+                        <div>
+                          <p className="text-sm text-gray-600">VAT Amount</p>
+                          <p className="text-sm font-medium text-green-600">
+                            ${aiExtractedData.vatAmount.toFixed(2)}
+                          </p>
+                        </div>
+                      </div>
+                    </div>
+                  )}
+                </>
               ) : (
                 <div className="flex items-start mb-4">
                   <div className="bg-blue-100 p-3 rounded-lg mr-4">
@@ -1100,6 +1263,11 @@ export const VATRefundPage: React.FC<VATRefundPageProps> = () => {
                   </span>
                 </div>
               </div>
+            </div>
+
+            {/* VAT Refund Fee Breakdown */}
+            <div className="mb-6">
+              <VATRefundFeeInfo vatAmount={refundAmount} />
             </div>
 
             <div className="flex justify-between">

@@ -7,51 +7,64 @@ import {
   AlertCircle,
 } from "lucide-react";
 import { motion } from "framer-motion";
-import { sendPayment, optInToAsset } from "../utils/aptos";
-import { useWallet } from "@aptos-labs/wallet-adapter-react";
+import {
+  sendPayment,
+  isWalletConnected,
+  getConnectedAccount,
+  getAccountBalance,
+  isValidAddress,
+  calculatePlatformFee,
+  calculateNetAmount,
+} from "../utils/monad";
+import { PlatformFeeInfo } from "./PlatformFeeInfo";
+
 export const PaymentGateway: React.FC = () => {
   const [recipientAddress, setRecipientAddress] = useState("");
   const [amount, setAmount] = useState("");
-  const [selectedToken, setSelectedToken] = useState("APT");
+  const [selectedToken, setSelectedToken] = useState("MON");
   const [isProcessing, setIsProcessing] = useState(false);
   const [paymentResult, setPaymentResult] = useState<{
     success: boolean;
     txHash?: string;
     error?: string;
   } | null>(null);
-  const { account, connected } = useWallet();
-  // For now, we'll use mock balance data - replace with actual Aptos balance queries
-  const balance = { data: { formatted: "100.0" } };
-  console.log({ balance });
+  const [walletBalance, setWalletBalance] = useState<{
+    mon: number;
+    usdc: number;
+  }>({ mon: 0, usdc: 0 });
   const [addressError, setAddressError] = useState("");
   const [amountError, setAmountError] = useState("");
-  const [isOptingIn, setIsOptingIn] = useState(false);
-  const [isOptedIntoUSDC, setIsOptedIntoUSDC] = useState(false);
 
-  // Check wallet connection
-  const walletConnected = connected;
+  // Check wallet connection and fetch real balance
+  const walletConnected = isWalletConnected();
+  const connectedAccount = getConnectedAccount();
 
-  // Check if user is opted-in to USDC
+  // Fetch real balance from Monad blockchain
   useEffect(() => {
-    const checkUSDCOptIn = async () => {
-      if (walletConnected) {
+    const fetchBalance = async () => {
+      if (walletConnected && connectedAccount) {
         try {
-          const balanceValue = balance.data?.formatted;
-          const hasUSDC =
-            balanceValue !== undefined && parseFloat(balanceValue) > 0;
-          setIsOptedIntoUSDC(hasUSDC);
+          const balance = await getAccountBalance();
+          setWalletBalance({
+            mon: balance.mon,
+            usdc: balance.assets.find((a) => a.symbol === "USDC")?.amount || 0,
+          });
         } catch (error) {
-          console.error("Failed to check USDC opt-in status:", error);
+          console.error("Failed to fetch balance:", error);
         }
       }
     };
-
-    checkUSDCOptIn();
-  }, [walletConnected]);
+    fetchBalance();
+  }, [walletConnected, connectedAccount]);
 
   const validateAddress = (address: string) => {
     if (!address) {
       setAddressError("Address is required");
+      return false;
+    }
+
+    if (!isValidAddress(address)) {
+      setAddressError("Invalid Monad address format (must start with 0x)");
       return false;
     }
 
@@ -72,8 +85,18 @@ export const PaymentGateway: React.FC = () => {
       return false;
     }
 
-    if (selectedToken === "APT" && numAmount < 0.001) {
-      setAmountError("Minimum amount is 0.001 APT");
+    if (selectedToken === "MON" && numAmount < 0.001) {
+      setAmountError("Minimum amount is 0.001 MON");
+      return false;
+    }
+
+    // Check if user has sufficient balance
+    const currentBalance =
+      selectedToken === "MON" ? walletBalance.mon : walletBalance.usdc;
+    if (numAmount > currentBalance) {
+      setAmountError(
+        `Insufficient ${selectedToken} balance. Available: ${currentBalance.toFixed(6)}`
+      );
       return false;
     }
 
@@ -120,7 +143,7 @@ export const PaymentGateway: React.FC = () => {
 
     try {
       console.log("Sending payment:", {
-        from: account?.address,
+        from: connectedAccount,
         recipient: recipientAddress,
         amount: parseFloat(amount),
         token: selectedToken,
@@ -129,7 +152,7 @@ export const PaymentGateway: React.FC = () => {
       const result = await sendPayment(
         recipientAddress,
         parseFloat(amount),
-        selectedToken
+        selectedToken as "MON" | "USDC"
       );
 
       if (result.success) {
@@ -143,6 +166,16 @@ export const PaymentGateway: React.FC = () => {
           setRecipientAddress("");
           setAmount("");
           setPaymentResult(null);
+          // Refresh balance after successful payment
+          if (walletConnected && connectedAccount) {
+            getAccountBalance().then((balance) => {
+              setWalletBalance({
+                mon: balance.mon,
+                usdc:
+                  balance.assets.find((a) => a.symbol === "USDC")?.amount || 0,
+              });
+            });
+          }
         }, 5000);
       } else {
         setPaymentResult({
@@ -175,44 +208,16 @@ export const PaymentGateway: React.FC = () => {
     }
   };
 
-  const handleOptInToUSDC = async () => {
-    if (!walletConnected) {
-      setPaymentResult({
-        success: false,
-        error: "Please connect your wallet first.",
-      });
-      return;
-    }
-
-    setIsOptingIn(true);
-    try {
-      const result = await optInToAsset("USDC");
-      if (result.success) {
-        setIsOptedIntoUSDC(true);
-        setPaymentResult({
-          success: true,
-        });
-      } else {
-        setPaymentResult({
-          success: false,
-          error: "Failed to opt-in to USDC. Please try again.",
-        });
-      }
-    } catch (error) {
-      setPaymentResult({
-        success: false,
-        error:
-          error instanceof Error ? error.message : "Failed to opt-in to USDC",
-      });
-    } finally {
-      setIsOptingIn(false);
-    }
-  };
-
   return (
     <div className="max-w-4xl mx-auto px-3 sm:px-4 lg:px-8 py-4 sm:py-8">
       <div className="bg-white border border-gray-200 rounded-lg p-4 sm:p-8 shadow-sm">
         {/* Header */}
+        <div className="mb-6">
+          <h2 className="text-2xl font-bold text-gray-900">Send Payment</h2>
+          <p className="text-gray-600 mt-1">
+            Transfer MON or USDC instantly on Monad blockchain
+          </p>
+        </div>
 
         <div className="space-y-4 sm:space-y-6">
           {/* Wallet Connection Warning */}
@@ -225,8 +230,7 @@ export const PaymentGateway: React.FC = () => {
                 </span>
               </div>
               <p className="text-yellow-700 text-xs sm:text-sm mt-1">
-                Please connect your wallet to send payments. Click the "Connect
-                Wallet" button in the sidebar.
+                Please connect your MetaMask wallet to send payments.
               </p>
             </div>
           )}
@@ -237,7 +241,7 @@ export const PaymentGateway: React.FC = () => {
               Select Token
             </label>
             <div className="grid grid-cols-2 gap-2 sm:gap-3">
-              {["APT", "USDC"].map((token) => (
+              {["MON", "USDC"].map((token) => (
                 <button
                   key={token}
                   onClick={() => setSelectedToken(token)}
@@ -247,44 +251,17 @@ export const PaymentGateway: React.FC = () => {
                       : "bg-gray-100 border-gray-300 text-gray-900 hover:border-gray-400"
                   }`}
                 >
-                  {token}
+                  <div className="font-semibold">{token}</div>
+                  {walletConnected && (
+                    <div className="text-xs mt-1 opacity-80">
+                      {token === "MON"
+                        ? `${walletBalance.mon.toFixed(4)} MON`
+                        : `${walletBalance.usdc.toFixed(2)} USDC`}
+                    </div>
+                  )}
                 </button>
               ))}
             </div>
-            {selectedToken === "USDC" &&
-              walletConnected &&
-              !isOptedIntoUSDC && (
-                <div className="mt-2 sm:mt-3 p-2 sm:p-3 bg-blue-50 border border-blue-200 rounded-lg">
-                  <div className="flex items-start justify-between">
-                    <div className="flex-1">
-                      <p className="text-xs sm:text-sm text-blue-800 font-medium">
-                        USDC Opt-in Required
-                      </p>
-                      <p className="text-xs text-blue-700 mt-1">
-                        You need to opt-in to USDC before receiving payments.
-                        This is a one-time setup.
-                      </p>
-                    </div>
-                    <button
-                      onClick={handleOptInToUSDC}
-                      disabled={isOptingIn}
-                      className="ml-2 sm:ml-3 px-2 sm:px-3 py-1 bg-blue-600 hover:bg-blue-700 text-white text-xs rounded transition-colors disabled:opacity-50"
-                    >
-                      {isOptingIn ? "Opting in..." : "Opt-in"}
-                    </button>
-                  </div>
-                </div>
-              )}
-            {selectedToken === "USDC" && walletConnected && isOptedIntoUSDC && (
-              <div className="mt-2 sm:mt-3 p-2 sm:p-3 bg-green-50 border border-green-200 rounded-lg">
-                <div className="flex items-center space-x-2">
-                  <CheckCircle className="w-3 h-3 sm:w-4 sm:h-4 text-green-600" />
-                  <p className="text-xs sm:text-sm text-green-800 font-medium">
-                    Ready to send USDC
-                  </p>
-                </div>
-              </div>
-            )}
           </div>
 
           {/* Recipient Address */}
@@ -298,8 +275,8 @@ export const PaymentGateway: React.FC = () => {
                 type="text"
                 value={recipientAddress}
                 onChange={handleAddressChange}
-                placeholder="Enter Aptos address"
-                className={`bg-gray-100 border border-gray-300 text-gray-900 rounded-lg pl-8 sm:pl-10 pr-4 py-2 sm:py-3 w-full focus:ring-2 focus:ring-purple-500 focus:border-transparent transition-all duration-200 text-sm sm:text-base ${
+                placeholder="Enter Monad address (0x...)"
+                className={`bg-gray-100 border border-gray-300 text-gray-900 rounded-lg pl-8 sm:pl-10 pr-4 py-2 sm:py-3 w-full focus:ring-2 focus:ring-purple-500 focus:border-transparent transition-all duration-200 text-sm sm:text-base font-mono ${
                   addressError ? "border-red-500 focus:border-red-500" : ""
                 }`}
               />
@@ -344,28 +321,45 @@ export const PaymentGateway: React.FC = () => {
             <motion.div
               initial={{ opacity: 0, y: -10 }}
               animate={{ opacity: 1, y: 0 }}
-              className="bg-gray-50 border border-gray-200 rounded-lg p-3 sm:p-4"
+              className="space-y-3"
             >
-              <h3 className="text-xs sm:text-sm font-medium text-gray-700 mb-2 sm:mb-3">
-                Transaction Summary
-              </h3>
-              <div className="space-y-1 sm:space-y-2 text-xs sm:text-sm">
-                <div className="flex justify-between">
-                  <span className="text-gray-600">To:</span>
-                  <span className="text-gray-900 font-mono text-xs sm:text-sm">
-                    {recipientAddress.substring(0, 6)}...
-                    {recipientAddress.substring(recipientAddress.length - 4)}
-                  </span>
-                </div>
-                <div className="flex justify-between">
-                  <span className="text-gray-600">Amount:</span>
-                  <span className="text-gray-900">
-                    {amount} {selectedToken}
-                  </span>
-                </div>
-                <div className="flex justify-between">
-                  <span className="text-gray-600">Network Fee:</span>
-                  <span className="text-gray-900">~0.001 APT</span>
+              {/* Platform Fee Information */}
+              <PlatformFeeInfo amount={parseFloat(amount)} />
+
+              <div className="bg-gray-50 border border-gray-200 rounded-lg p-3 sm:p-4">
+                <h3 className="text-xs sm:text-sm font-medium text-gray-700 mb-2 sm:mb-3">
+                  Transaction Summary
+                </h3>
+                <div className="space-y-1 sm:space-y-2 text-xs sm:text-sm">
+                  <div className="flex justify-between">
+                    <span className="text-gray-600">To:</span>
+                    <span className="text-gray-900 font-mono text-xs sm:text-sm">
+                      {recipientAddress.substring(0, 6)}...
+                      {recipientAddress.substring(recipientAddress.length - 4)}
+                    </span>
+                  </div>
+                  <div className="flex justify-between">
+                    <span className="text-gray-600">Amount:</span>
+                    <span className="text-gray-900">
+                      {amount} {selectedToken}
+                    </span>
+                  </div>
+                  <div className="flex justify-between">
+                    <span className="text-gray-600">Platform Fee (0.5%):</span>
+                    <span className="text-orange-600 font-medium">
+                      {calculatePlatformFee(parseFloat(amount)).toFixed(4)} {selectedToken}
+                    </span>
+                  </div>
+                  <div className="flex justify-between">
+                    <span className="text-gray-600">Network Fee:</span>
+                    <span className="text-gray-900">~0.001 MON</span>
+                  </div>
+                  <div className="flex justify-between pt-2 border-t border-gray-300">
+                    <span className="text-gray-900 font-semibold">Recipient Gets:</span>
+                    <span className="text-green-600 font-semibold">
+                      {calculateNetAmount(parseFloat(amount)).toFixed(4)} {selectedToken}
+                    </span>
+                  </div>
                 </div>
               </div>
             </motion.div>
@@ -401,7 +395,7 @@ export const PaymentGateway: React.FC = () => {
                   {paymentResult.success ? (
                     <div className="space-y-1">
                       <p className="text-xs sm:text-sm text-green-700">
-                        Your payment has been sent successfully.
+                        Your payment has been sent successfully on Monad blockchain.
                       </p>
                       {paymentResult.txHash && (
                         <div className="text-xs text-green-600 font-mono">
@@ -412,13 +406,13 @@ export const PaymentGateway: React.FC = () => {
                       <button
                         onClick={() =>
                           window.open(
-                            `https://explorer.aptoslabs.com/txn/${paymentResult.txHash}`,
+                            `https://explorer.monad.xyz/tx/${paymentResult.txHash}`,
                             "_blank"
                           )
                         }
                         className="text-xs text-purple-600 hover:text-purple-700 inline-flex items-center space-x-1 mt-1"
                       >
-                        <span>View on Explorer</span>
+                        <span>View on Monad Explorer</span>
                         <ArrowRight className="w-3 h-3" />
                       </button>
                     </div>

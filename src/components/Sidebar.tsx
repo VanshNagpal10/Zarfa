@@ -97,6 +97,12 @@ export const Sidebar: React.FC<SidebarProps> = ({
       description: "Process VAT Refunds",
     },
     {
+      id: "ai-receipt-demo",
+      label: "🤖 AI Receipt Demo",
+      icon: Receipt,
+      description: "Test AI Receipt Processing",
+    },
+    {
       id: "employees",
       label: "Employees",
       icon: Users,

@@ -59,8 +59,28 @@ export const VATRefundOverview: React.FC<VATRefundOverviewProps> = ({ setActiveT
         const totalRefunded = completedRefunds.reduce((sum, payment) => sum + payment.amount, 0);
         const pendingAmount = pendingRefunds.reduce((sum, payment) => sum + payment.amount, 0);
         
-        // Calculate average processing time (mock for now)
-        const averageProcessingTime = '1 day';
+        // Calculate real average processing time from completed refunds
+        let averageProcessingTime = 'N/A';
+        if (completedRefunds.length > 0) {
+          const processingTimes = completedRefunds
+            .filter(r => r.created_at && r.payment_date)
+            .map(r => {
+              const created = new Date(r.created_at).getTime();
+              const completed = new Date(r.payment_date).getTime();
+              return (completed - created) / (1000 * 60 * 60 * 24); // days
+            });
+          
+          if (processingTimes.length > 0) {
+            const avgDays = processingTimes.reduce((a, b) => a + b, 0) / processingTimes.length;
+            if (avgDays < 1) {
+              const hours = Math.round(avgDays * 24);
+              averageProcessingTime = `${hours} hour${hours !== 1 ? 's' : ''}`;
+            } else {
+              const days = Math.round(avgDays);
+              averageProcessingTime = `${days} day${days !== 1 ? 's' : ''}`;
+            }
+          }
+        }
         
         // Get the most recent refund date
         const dates = vatRefunds.map(payment => new Date(payment.created_at).getTime());
@@ -84,7 +104,7 @@ export const VATRefundOverview: React.FC<VATRefundOverviewProps> = ({ setActiveT
             date: payment.created_at,
             amount: payment.amount,
             status: payment.status,
-            token: payment.token || 'APT',
+            token: payment.token || 'MON',
             transaction_hash: payment.transaction_hash
           }));
         

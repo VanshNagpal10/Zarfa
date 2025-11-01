@@ -1,7 +1,7 @@
 import { useState, useCallback, useEffect } from "react";
 import { supabase } from "../lib/supabase";
 import type { Payment } from "../lib/supabase";
-import { useWallet } from "@aptos-labs/wallet-adapter-react";
+import { useWallet } from "../contexts/WalletContext";
 
 // Helper function to generate a UUID
 function generateUUID() {
@@ -17,19 +17,19 @@ export const usePayments = () => {
   const [payments, setPayments] = useState<Payment[]>([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const { account, connected } = useWallet();
+  const { address, isConnected } = useWallet();
 
   // Check wallet connection on hook initialization
   useEffect(() => {
     const checkWalletConnection = () => {
-      if (connected && account?.address) {
-        setWalletAddress(account.address);
+      if (isConnected && address) {
+        setWalletAddress(address);
       } else {
         setWalletAddress(null);
       }
     };
     checkWalletConnection();
-  }, []);
+  }, [address, isConnected]);
 
   // Load payments from localStorage when wallet address changes
   useEffect(() => {

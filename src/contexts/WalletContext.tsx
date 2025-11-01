@@ -95,28 +95,40 @@ export const WalletProvider: React.FC<{ children: React.ReactNode }> = ({ childr
   useEffect(() => {
     const attemptReconnect = async () => {
       const wasConnected = localStorage.getItem('wallet_connected') === 'true';
+      const storedAccount = localStorage.getItem('monad_connected_account');
       
-      if (wasConnected) {
+      if (wasConnected || storedAccount) {
+        console.log('🔄 Attempting wallet reconnection...');
         try {
+          // First try to get the already connected account
           const connectedAccount = getConnectedAccount();
           if (connectedAccount) {
+            console.log('✅ Found connected account:', connectedAccount);
             setIsConnected(true);
             setAddress(connectedAccount);
             await refreshBalance();
+            return;
+          }
+          
+          // Try reconnecting via MetaMask
+          console.log('🔌 Reconnecting via MetaMask...');
+          const result = await reconnectWallet();
+          if (result) {
+            console.log('✅ Reconnected successfully:', result.address);
+            setIsConnected(true);
+            setAddress(result.address);
+            setBalance(result.balance);
+            localStorage.setItem('wallet_connected', 'true');
           } else {
-            const result = await reconnectWallet();
-            if (result) {
-              setIsConnected(true);
-              setAddress(result.address);
-              setBalance(result.balance);
-            } else {
-              // Clear stale connection flag
-              localStorage.removeItem('wallet_connected');
-            }
+            // Clear stale connection flags
+            console.log('⚠️ Could not reconnect, clearing stale data');
+            localStorage.removeItem('wallet_connected');
+            localStorage.removeItem('monad_connected_account');
           }
         } catch (err) {
-          console.error('Failed to reconnect wallet:', err);
+          console.error('❌ Failed to reconnect wallet:', err);
           localStorage.removeItem('wallet_connected');
+          localStorage.removeItem('monad_connected_account');
         }
       }
     };

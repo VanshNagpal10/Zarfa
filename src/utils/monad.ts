@@ -1,5 +1,12 @@
 // Monad blockchain utilities for EVM-compatible blockchain
 
+// Platform Configuration
+export const PLATFORM_CONFIG = {
+  feePercentage: 0.5, // 0.5% platform fee
+  platformWallet: "0x742d35Cc6634C0532925a3b844Bc9e7595f0bEb", // Platform fee collection wallet
+  vatRefundPercentage: 85, // 85-87% VAT refund rate (configurable)
+};
+
 // Monad Testnet Configuration
 export const MONAD_CONFIG = {
   rpcUrl: "https://testnet-rpc.monad.xyz",
@@ -17,8 +24,36 @@ export const MONAD_CONFIG = {
   },
 };
 
+// Calculate platform fee
+export const calculatePlatformFee = (amount: number): number => {
+  return (amount * PLATFORM_CONFIG.feePercentage) / 100;
+};
+
+// Calculate net amount after platform fee
+export const calculateNetAmount = (amount: number): number => {
+  const fee = calculatePlatformFee(amount);
+  return amount - fee;
+};
+
+// Calculate VAT refund amount
+export const calculateVATRefund = (
+  vatAmount: number,
+  refundPercentage: number = PLATFORM_CONFIG.vatRefundPercentage
+): number => {
+  const grossRefund = (vatAmount * refundPercentage) / 100;
+  return calculateNetAmount(grossRefund);
+};
+
 // State management for wallet connection
 let connectedAccount: string | null = null;
+
+// Initialize from localStorage on module load
+if (typeof window !== "undefined") {
+  const stored = localStorage.getItem("monad_connected_account");
+  if (stored) {
+    connectedAccount = stored;
+  }
+}
 
 // Check if MetaMask or compatible wallet is installed
 export const isWalletInstalled = (): boolean => {
@@ -92,6 +127,9 @@ export const connectWallet = async (): Promise<{
       throw new Error("No accounts found");
 
     connectedAccount = accounts[0];
+    
+    // Persist connected account to localStorage
+    localStorage.setItem("monad_connected_account", accounts[0]);
 
     // Switch to Monad network
     try {
@@ -99,8 +137,9 @@ export const connectWallet = async (): Promise<{
         method: "wallet_switchEthereumChain",
         params: [{ chainId: MONAD_CONFIG.chainIdHex }],
       });
-    } catch (switchError: any) {
-      if (switchError.code === 4902) {
+    } catch (switchError: unknown) {
+      const error = switchError as { code?: number };
+      if (error.code === 4902) {
         await ethereum.request({
           method: "wallet_addEthereumChain",
           params: [
@@ -135,6 +174,8 @@ export const connectWallet = async (): Promise<{
 // Disconnect wallet
 export const disconnectWallet = async (): Promise<void> => {
   connectedAccount = null;
+  // Clear persisted account from localStorage
+  localStorage.removeItem("monad_connected_account");
 };
 
 // Reconnect wallet
@@ -151,6 +192,10 @@ export const reconnectWallet = async (): Promise<{
     if (!accounts || accounts.length === 0) return null;
 
     connectedAccount = accounts[0];
+    
+    // Persist connected account to localStorage
+    localStorage.setItem("monad_connected_account", accounts[0]);
+    
     const balanceHex = await ethereum.request({
       method: "eth_getBalance",
       params: [accounts[0], "latest"],
@@ -204,15 +249,54 @@ export const sendPayment = async (
   recipient: string,
   amount: number,
   _token: string = "MON",
-  _walletSignAndSubmitTransaction?: any
-): Promise<{ success: boolean; txHash?: string; error?: string }> => {
+  _walletSignAndSubmitTransaction?: unknown,
+  includePlatformFee: boolean = false
+): Promise<{ 
+  success: boolean; 
+  txHash?: string; 
+  error?: string;
+  platformFee?: number;
+  netAmount?: number;
+}> => {
   try {
     if (!isValidAddress(recipient)) throw new Error("Invalid Ethereum address");
     if (amount <= 0) throw new Error("Amount must be greater than 0");
     if (!connectedAccount) throw new Error("No wallet connected");
 
     const ethereum = getProvider();
-    const amountWei = "0x" + (amount * 1e18).toString(16);
+    
+    // Calculate platform fee if enabled
+    let netAmount = amount;
+    let platformFee = 0;
+    
+    if (includePlatformFee) {
+      platformFee = calculatePlatformFee(amount);
+      netAmount = amount - platformFee;
+      
+      // Send platform fee to platform wallet if fee > 0
+      if (platformFee > 0.000001 && isValidAddress(PLATFORM_CONFIG.platformWallet)) {
+        const feeWei = "0x" + Math.floor(platformFee * 1e18).toString(16);
+        try {
+          await ethereum.request({
+            method: "eth_sendTransaction",
+            params: [
+              {
+                from: connectedAccount,
+                to: PLATFORM_CONFIG.platformWallet,
+                value: feeWei,
+                gas: "0x5208",
+              },
+            ],
+          });
+        } catch (feeError) {
+          console.warn("Platform fee transaction failed:", feeError);
+          // Continue with main payment even if fee fails
+        }
+      }
+    }
+    
+    // Send net amount to recipient
+    const amountWei = "0x" + Math.floor(netAmount * 1e18).toString(16);
 
     const txHash = await ethereum.request({
       method: "eth_sendTransaction",
@@ -226,7 +310,12 @@ export const sendPayment = async (
       ],
     });
 
-    return { success: true, txHash };
+    return { 
+      success: true, 
+      txHash,
+      platformFee: includePlatformFee ? platformFee : undefined,
+      netAmount: includePlatformFee ? netAmount : undefined,
+    };
   } catch (error) {
     return {
       success: false,
@@ -239,8 +328,16 @@ export const sendPayment = async (
 export const sendBulkPayment = async (
   recipients: Array<{ address: string; amount: number }>,
   _token: "MON" | "USDC" = "MON",
-  _walletSignAndSubmitTransaction?: any
-): Promise<{ success: boolean; txHash?: string; error?: string }> => {
+  _walletSignAndSubmitTransaction?: unknown,
+  includePlatformFee: boolean = false
+): Promise<{ 
+  success: boolean; 
+  txHash?: string; 
+  error?: string;
+  totalPlatformFee?: number;
+  totalNetAmount?: number;
+  failedTransactions?: number;
+}> => {
   try {
     if (!recipients || recipients.length === 0)
       throw new Error("No recipients provided");
@@ -256,25 +353,74 @@ export const sendBulkPayment = async (
 
     const ethereum = getProvider();
     let lastTxHash: string = "";
+    let totalPlatformFee = 0;
+    let totalNetAmount = 0;
+    let failedTransactions = 0;
 
+    // Calculate total platform fee if enabled
+    if (includePlatformFee) {
+      totalPlatformFee = recipients.reduce((sum, r) => sum + calculatePlatformFee(r.amount), 0);
+      
+      // Send consolidated platform fee
+      if (totalPlatformFee > 0.000001 && isValidAddress(PLATFORM_CONFIG.platformWallet)) {
+        const feeWei = "0x" + Math.floor(totalPlatformFee * 1e18).toString(16);
+        try {
+          await ethereum.request({
+            method: "eth_sendTransaction",
+            params: [
+              {
+                from: connectedAccount,
+                to: PLATFORM_CONFIG.platformWallet,
+                value: feeWei,
+                gas: "0x5208",
+              },
+            ],
+          });
+        } catch (feeError) {
+          console.warn("Platform fee transaction failed:", feeError);
+          // Continue with main payments even if fee fails
+        }
+      }
+    }
+
+    // Process each recipient payment
     for (const recipient of recipients) {
-      const amountWei = "0x" + (recipient.amount * 1e18).toString(16);
-      const txHash = await ethereum.request({
-        method: "eth_sendTransaction",
-        params: [
-          {
-            from: connectedAccount,
-            to: recipient.address,
-            value: amountWei,
-            gas: "0x5208",
-          },
-        ],
-      });
-      lastTxHash = txHash;
+      try {
+        const netAmount = includePlatformFee 
+          ? recipient.amount - calculatePlatformFee(recipient.amount)
+          : recipient.amount;
+        
+        totalNetAmount += netAmount;
+        
+        const amountWei = "0x" + Math.floor(netAmount * 1e18).toString(16);
+        const txHash = await ethereum.request({
+          method: "eth_sendTransaction",
+          params: [
+            {
+              from: connectedAccount,
+              to: recipient.address,
+              value: amountWei,
+              gas: "0x5208",
+            },
+          ],
+        });
+        lastTxHash = txHash;
+      } catch (txError) {
+        console.error(`Failed to send payment to ${recipient.address}:`, txError);
+        failedTransactions++;
+      }
+      
+      // Small delay between transactions
       await new Promise((resolve) => setTimeout(resolve, 1000));
     }
 
-    return { success: true, txHash: lastTxHash };
+    return { 
+      success: failedTransactions < recipients.length, 
+      txHash: lastTxHash,
+      totalPlatformFee: includePlatformFee ? totalPlatformFee : undefined,
+      totalNetAmount: includePlatformFee ? totalNetAmount : undefined,
+      failedTransactions: failedTransactions > 0 ? failedTransactions : undefined,
+    };
   } catch (error) {
     return {
       success: false,
@@ -336,7 +482,7 @@ export const submitVATRefund = async (
   vatAmount: number,
   currency: string = "MON",
   documentHash: string = "",
-  _walletSignAndSubmitTransaction?: any
+  _walletSignAndSubmitTransaction?: unknown
 ): Promise<{ success: boolean; txHash?: string; error?: string }> => {
   try {
     if (billAmount <= 0 || vatAmount <= 0) {
@@ -414,9 +560,4 @@ export const calculateVATAmount = (
   vatRate: number = 20
 ): number => {
   return (billAmount * vatRate) / (100 + vatRate);
-};
-
-// Mock address generator for compatibility
-export const generateMockAddress = (): string => {
-  return "0x" + Math.random().toString(16).substring(2, 42).padEnd(40, "0");
 };

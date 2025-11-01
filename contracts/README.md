@@ -1,8 +1,12 @@
 # Orbix Payment Contracts
 
-This directory contains the Aptos Move smart contracts for the Orbix payment system.
+⚠️ **IMPORTANT**: This directory contains **legacy Aptos Move contracts** that are **not compatible** with the current Monad blockchain implementation.
 
-## Contracts
+## Current Status
+
+The Orbix frontend has migrated to **Monad (EVM-compatible)** blockchain. These Move contracts require a complete rewrite in **Solidity** to work with Monad.
+
+## Legacy Contracts (Aptos Move - Not Deployed)
 
 ### 1. Payment Processor (`payment_processor.move`)
 Handles general payments including:
@@ -19,7 +23,15 @@ Specialized contract for VAT refund processing:
 - VAT calculation utilities
 - Refund statistics tracking
 
-## Deployment
+## Migration Required
+
+To deploy these contracts on Monad, you need to:
+1. Rewrite contracts in Solidity (EVM-compatible)
+2. Use Hardhat or Foundry for deployment
+3. Deploy to Monad Testnet (Chain ID: 10143)
+4. Update frontend to use new contract addresses
+
+## Aptos Deployment (Historical Reference)
 
 ### Prerequisites
 1. Install Aptos CLI: https://aptos.dev/cli-tools/aptos-cli-tool/install-aptos-cli
@@ -97,7 +109,7 @@ aptos move run \
   --profile testnet
 ```
 
-## Testing
+## Testing (Aptos)
 
 Run the Move unit tests:
 
@@ -105,12 +117,16 @@ Run the Move unit tests:
 aptos move test
 ```
 
-## Integration
+## Integration Status
 
-Update your frontend `utils/aptos.ts` to use these contract functions instead of mock implementations.
+⚠️ **Current Frontend Uses**: Direct wallet transactions via `utils/monad.ts` (MetaMask integration)
+- Payment functions: `sendPayment()`, `sendBulkPayment()` 
+- No smart contracts deployed yet on Monad
+- All payments execute as simple transfers
 
-Key integration points:
-1. Replace mock `sendPayment` with contract calls
+**Future Smart Contract Integration** (requires Solidity rewrite):
+1. Deploy Solidity contracts to Monad
+2. Update `utils/monad.ts` to call contract functions
 2. Replace mock `sendBulkPayment` with bulk contract calls  
 3. Add VAT refund submission functionality
 4. Integrate payment history from contract events

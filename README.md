@@ -452,25 +452,33 @@ contracts/
 
 - ✅ **Real Problem**: $200B+ VAT goes unclaimed annually - massive market opportunity
 - ✅ **Proven Solution**: Started with founder's personal pain point in Dubai
-- ✅ **Strategic Location**: Dubai as launch market with Aptos partnerships  
-- ✅ **Technical Excellence**: Built on fast, low-cost Aptos infrastructure
-- ✅ **User Experience**: Wallet-native flows eliminate friction completely
+- ✅ **Strategic Technology**: Built on fast, EVM-compatible Monad infrastructure  
+- ✅ **Technical Excellence**: Lightning-fast transactions with low costs
+- ✅ **User Experience**: Wallet-native flows with MetaMask eliminate friction completely
+- ✅ **localStorage-First**: App works independently without backend dependencies
 
 **⚡ Orbix will be killing it!!**
 
 ---
 
-## 🌟 Why Aptos Blockchain?
+## 🌟 Why Monad Blockchain?
 
-Orbix leverages the unique advantages of the Aptos blockchain:
+Orbix leverages the unique advantages of the Monad blockchain:
 
-- **Lightning-Fast Finality**: ~3 second transaction finality enables real-time payments
+- **Lightning-Fast Finality**: ~1 second block time enables real-time payments
+- **EVM Compatibility**: Full Ethereum tooling support and Solidity smart contracts
 - **Low Transaction Costs**: Minimal fees make micro-transactions economically viable
-- **Move Smart Contracts**: Memory-safe, resource-oriented programming for secure DeFi
-- **Parallel Execution**: High throughput supports enterprise-scale payment volumes
-- **Petra Wallet Ecosystem**: Seamless integration with Aptos's premier wallet
-- **Developer Experience**: Intuitive APIs and comprehensive TypeScript SDK
-- **Sustainable Consensus**: Energy-efficient proof-of-stake mechanism
+- **High Throughput**: Parallel execution supports enterprise-scale payment volumes
+- **MetaMask Native**: Seamless integration with the world's most popular Web3 wallet
+- **Developer Experience**: Standard EVM development with comprehensive documentation
+- **Performance**: 10,000+ TPS with optimistic execution and deferred state updates
+
+### Monad Testnet Details
+- **Chain ID**: 10143
+- **RPC URL**: https://testnet-rpc.monad.xyz
+- **Explorer**: https://testnet.monadexplorer.com/
+- **Faucet**: https://testnet.monad.xyz
+- **Native Token**: MON
 
 ## 🤝 Contributing
 
